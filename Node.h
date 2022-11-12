@@ -41,12 +41,16 @@ private:
 
 
 
+	bool CheckIsNodeInContainer(const std::shared_ptr<Node>& NodePtr, const std::vector<std::weak_ptr<Node>>& Container) const;
+
+
+
 	int GenerateRandomNumber();
 
 
 	//TODO: Refactor event handlers. Create event handler class and transfer all logic there
-	void EventHandlerSum(const Node& Other);
-	void EventHandlerNumberOfEvents(const Node& Other);
+	void EventHandlerSum(int Sum, const Node& Other);
+	void EventHandlerNumberOfEvents(int Sum, const Node& Other);
 
 
 	static int mFactoryCounter;

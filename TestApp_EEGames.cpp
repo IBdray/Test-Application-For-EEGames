@@ -7,5 +7,9 @@
 
 int main()
 {
+    auto n1 = Node::Create();
+    auto n2 = n1->GenerateNewNeighbor();
+    n2->CreateEvent();
+
     std::cin.get();
 }

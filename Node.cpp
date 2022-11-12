@@ -1,6 +1,9 @@
 #include "Node.h"
 
-#include "iostream"
+#include <algorithm>
+#include <iostream>
+#include <random>
+
 
 int Node::mFactoryCounter = 0;
 
@@ -42,20 +45,20 @@ void Node::SubscribeTo(std::shared_ptr<Node> Other)
 		mSubscribedTo.emplace_back(Other);
 		Other->AddSubscriber(shared_from_this());
 
-		//if (std::find(mNeighbors.cbegin(), mNeighbors.cend(), Other) == mNeighbors.cend())
-			//mNeighbors.emplace_back(Other);
+		if (CheckIsNodeInContainer(Other, mNeighbors))
+			mNeighbors.emplace_back(Other);
 
 	}
 }
 
 void Node::AddSubscriber(std::shared_ptr<Node> Other)
 {
-	if (Other != shared_from_this() )//&& std::find(mSubscribers.cbegin(), mSubscribers.cend(), Other) == mSubscribers.cend())
+	if (Other != shared_from_this() && CheckIsNodeInContainer(Other, mSubscribers))
 	{
 		mSubscribers.emplace_back(Other);
 
-		//if (std::find(mNeighbors.cbegin(), mNeighbors.cend(), Other) == mNeighbors.cend())
-			//mNeighbors.emplace_back(Other);
+		if (CheckIsNodeInContainer(Other, mNeighbors))
+			mNeighbors.emplace_back(Other);
 	}
 }
 
@@ -69,34 +72,47 @@ void Node::Update()
 
 void Node::CreateEvent()
 {
-	/*auto EventValue = GenerateRandomNumber();
+	auto EventValue = GenerateRandomNumber();
 	for (auto Subscriber : mSubscribers)
 	{
-		Subscriber.ReceiveEvent(EventValue);
-	}*/
+		if (!Subscriber.expired())
+			Subscriber.lock()->ReceiveEvent(EventValue, *this);
+	}
 }
 
 void Node::ReceiveEvent(int Value, const Node& Other)
 {
-	//// TODO: Save value to member variable
-	//EventHandlerSum(Other);
+	// TODO: Save value to member variable
+	// maybe create a struct with ptr to subscribed node, sum of event values and number of received events
+	EventHandlerSum(Value, Other);
 }
 
 
-
-
+bool Node::CheckIsNodeInContainer(const std::shared_ptr<Node>& NodePtr,
+	const std::vector<std::weak_ptr<Node>>& Container) const
+{
+	return std::find_if(Container.cbegin(), Container.cend(), 
+		[NodePtr](const std::weak_ptr<Node>& ContainerNode)
+		{
+			return !ContainerNode.expired() ? ContainerNode.lock() == NodePtr : false;
+		}) == Container.cend();
+}
 
 int Node::GenerateRandomNumber()
 {
-	return 0;//std::rand();
+	std::random_device RandomDevice;
+	std::mt19937 Rand(RandomDevice());
+	std::uniform_int_distribution<int> RandomDistribution;
+
+	return RandomDistribution(Rand);
 }
 
-void Node::EventHandlerSum(const Node& Other)
+void Node::EventHandlerSum(int Sum, const Node& Other)
 {
-	std::cout<<mName<<"->"<<Other.mName<<": "<<"Sum";
+	std::cout << Other.mName << "->" << mName << ": " << Sum;
 }
 
-void Node::EventHandlerNumberOfEvents(const Node& Other)
+void Node::EventHandlerNumberOfEvents(int Num, const Node& Other)
 {
-	std::cout<<mName<<"->"<<Other.mName<<": "<<"Num";
+	std::cout << Other.mName << "->" << mName << ": " << Num;
 }
