@@ -4,8 +4,10 @@
 #include "string"
 #include "memory"
 
-#include "Preferences.h"
+#include "ActionPreferences.h"
 
+
+enum class NodeActions;
 
 
 class Node : public std::enable_shared_from_this<Node>
@@ -18,6 +20,7 @@ public:
 	template<typename... Ts>
 	static std::shared_ptr<Node> Create(Ts&&... Args);
 
+
 	friend bool operator== (const Node& Lhs, const Node& Rhs) {return Lhs == Rhs;}
 	friend bool operator!= (const Node& Lhs, const Node& Rhs) {return Lhs != Rhs;}
 
@@ -25,18 +28,17 @@ public:
 
 	// === Actions ===
 	void GenerateEvent();
-
-	std::shared_ptr<Node> SubscribeToNeighbor(std::shared_ptr<Node> Other);
-
-	std::shared_ptr<Node> UnsubscribeFromNeighbor(std::shared_ptr<Node> Other);
-
+	void SubscribeToNeighbor();
+	void SubscribeToNeighbor(std::shared_ptr<Node> Other);
+	void UnsubscribeFromNeighbor();
+	void UnsubscribeFromNeighbor(std::shared_ptr<Node> Other);
 	std::shared_ptr<Node> GenerateNewNeighbor();
 
 
 
 	std::string GetName() const {return mName;}
-	/*const std::vector<std::shared_ptr<Node>>& GetSubscribedToArray() const {return mSubscribedTo;}
-	const std::vector<std::weak_ptr<Node>>& GetSubscribersArray() const {return mSubscribers;}*/
+	ActionPreferences GetActionPreferences() const {return mActionPreferences;}
+	const std::vector<std::weak_ptr<Node>>& GetNeighbors() const {return mNeighbors;}
 
 	bool CheckIsNeighbors(const std::shared_ptr<Node>& Other) const;
 	bool CheckIsSubscribedTo(const std::shared_ptr<Node>& Other) const;
@@ -46,7 +48,9 @@ private:
 	Node();
 
 	template<typename T>
-	Node(T&& Name, Preferences Preferences);
+	Node(T&& Name, ActionPreferences Preferences, bool Active = true);
+
+	
 
 
 	std::shared_ptr<Node> SubscribeTo(std::shared_ptr<Node> Other);
@@ -82,7 +86,7 @@ private:
 	static int mFactoryCounter;
 
 	std::string mName;
-	Preferences mPreferences;
+	ActionPreferences mActionPreferences;
 
 
 	std::vector<std::weak_ptr<Node>> mNeighbors;
@@ -93,6 +97,5 @@ private:
 	bool mActive;
 	bool mPendingKill;
 
+
 };
-
-

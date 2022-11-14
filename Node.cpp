@@ -1,4 +1,5 @@
 #include "Node.h"
+#include "NodeEnums.h"
 
 #include <algorithm>
 #include <iostream>
@@ -19,31 +20,49 @@ std::shared_ptr<Node> Node::Create(Ts&&... Args)
 Node::Node()
 {
 	mName = "Node_" + std::to_string(mFactoryCounter++);
-	mPreferences = Preferences();
+	mActionPreferences = ActionPreferences(50);
 	mActive = false;
 	mPendingKill = false;
 }
 
 template<typename T>
-Node::Node(T&&Name, Preferences Preferences)
-	: mName(std::forward<T>(Name)), mPreferences(Preferences), mActive(false), mPendingKill(false)
+Node::Node(T&&Name, ActionPreferences Preferences, bool Active)
+	: mName(std::forward<T>(Name)), mActionPreferences(Preferences), mActive(Active), mPendingKill(false)
 {
 }
 
-
-std::shared_ptr<Node> Node::GenerateNewNeighbor()
-{
-	auto Temp = Create();
-	SubscribeTo(Temp);
-	return Temp;
-}
 
 
 void Node::Update()
 {
 	if (mActive)
 	{
-		GenerateEvent();
+		switch (mActionPreferences.GetRandomAction())
+		{
+		case NodeActions::GenerateEvent:
+			GenerateEvent();
+			break;
+
+		case NodeActions::SubscribeToNeighbor:
+			SubscribeToNeighbor();
+			break;
+
+		case NodeActions::UnsubscribeFromNeighbor:
+			UnsubscribeFromNeighbor();
+			break;
+
+		case NodeActions::GenerateNewNeighbor:
+			std::cout << "Generate New Neighbor" << std::endl;
+
+			GenerateNewNeighbor();
+			break;
+
+		case NodeActions::Sleep:
+			std::cout << "Sleep" << std::endl;
+
+			break;
+		}
+		
 	}
 	else
 	{
@@ -61,6 +80,7 @@ void Node::GenerateEvent()
 	}
 }
 
+
 void Node::ReceiveEvent(int Value, const Node& Other)
 {
 	// TODO: Save value to member variable
@@ -69,22 +89,69 @@ void Node::ReceiveEvent(int Value, const Node& Other)
 }
 
 
-
-std::shared_ptr<Node> Node::SubscribeToNeighbor(std::shared_ptr<Node> Other)
+void Node::SubscribeToNeighbor()
 {
-	return SubscribeTo(Other);
+	if (!mNeighbors.empty())
+	{
+		const auto NeighborIndex = GenerateRandomNumber() % mNeighbors.size();
+
+		if (!mNeighbors[NeighborIndex].expired())
+		{
+			const auto Neighbor = mNeighbors[NeighborIndex].lock();
+
+			if (!Neighbor->GetNeighbors().empty())
+			{
+				const auto NeighborsNeighborIndex = GenerateRandomNumber() % Neighbor->GetNeighbors().size();
+				if (!Neighbor->GetNeighbors()[NeighborsNeighborIndex].expired())
+				{
+					const auto NeighborsNeighbor = Neighbor->GetNeighbors()[NeighborsNeighborIndex].lock();
+					if (NeighborsNeighbor != shared_from_this())
+					{
+						SubscribeTo(NeighborsNeighbor);
+
+						std::cout << GetName() << " subscribed to " << NeighborsNeighbor->GetName() << std::endl;
+					}
+				}
+			}
+		}
+	}
 }
 
-std::shared_ptr<Node> Node::UnsubscribeFromNeighbor(std::shared_ptr<Node> Other)
+void Node::SubscribeToNeighbor(std::shared_ptr<Node> Other)
 {
+	SubscribeTo(Other);
+}
 
-	return UnsubscribeFrom(Other);
+void Node::UnsubscribeFromNeighbor()
+{
+	if (!mSubscribedTo.empty())
+	{
+		const auto SubscribedIndex = GenerateRandomNumber() % mSubscribedTo.size();
+		const auto Neighbor = mSubscribedTo[SubscribedIndex];
+		
+		UnsubscribeFrom(Neighbor);
+
+		std::cout << GetName() << " unsubscribed from " << Neighbor->GetName() << std::endl;
+	}
+}
+
+void Node::UnsubscribeFromNeighbor(std::shared_ptr<Node> Other)
+{
+	UnsubscribeFrom(Other);
+}
+
+std::shared_ptr<Node> Node::GenerateNewNeighbor()
+{
+	//TODO: fix memory limit issue for amount of nodes (maybe with exception handling)
+	auto Temp = Create();
+	SubscribeTo(Temp);
+	return Temp;
 }
 
 
 std::shared_ptr<Node> Node::SubscribeTo(std::shared_ptr<Node> Other)
 {
-	if (Other != shared_from_this() && !CheckIsSubscribedTo(Other))
+	if (Other && Other != shared_from_this() && !CheckIsSubscribedTo(Other))
 	{
 		mSubscribedTo.emplace_back(Other);
 		Other->AddSubscriber(shared_from_this());
@@ -95,7 +162,7 @@ std::shared_ptr<Node> Node::SubscribeTo(std::shared_ptr<Node> Other)
 
 std::shared_ptr<Node> Node::UnsubscribeFrom(std::shared_ptr<Node> Other)
 {
-	if (Other != shared_from_this() && CheckIsSubscribedTo(Other))
+	if (Other && Other != shared_from_this() && CheckIsSubscribedTo(Other))
 	{
 		mSubscribedTo.erase(FindNodeInContainer(Other, mSubscribedTo));
 		Other->RemoveSubscriber(shared_from_this());
@@ -106,7 +173,7 @@ std::shared_ptr<Node> Node::UnsubscribeFrom(std::shared_ptr<Node> Other)
 
 void Node::AddSubscriber(std::shared_ptr<Node> Other)
 {
-	if (Other != shared_from_this() && !CheckIsSubscriber(Other))
+	if (Other && Other != shared_from_this() && !CheckIsSubscriber(Other))
 	{
 		mSubscribers.emplace_back(Other);
 	}
@@ -114,7 +181,7 @@ void Node::AddSubscriber(std::shared_ptr<Node> Other)
 
 void Node::RemoveSubscriber(std::shared_ptr<Node> Other)
 {
-	if (Other != shared_from_this() && CheckIsSubscriber(Other))
+	if (Other && Other != shared_from_this() && CheckIsSubscriber(Other))
 	{
 		mSubscribers.erase(FindNodeInContainer(Other, mSubscribers));
 	}
@@ -123,9 +190,9 @@ void Node::RemoveSubscriber(std::shared_ptr<Node> Other)
 
 void Node::BecomeNeighbors(std::shared_ptr<Node> Other)
 {
-	if (!CheckIsNeighbors(Other))
+	if (Other && !CheckIsNeighbors(Other))
 		mNeighbors.emplace_back(Other);
-	if (!Other->CheckIsNeighbors(shared_from_this()))
+	if (Other && !Other->CheckIsNeighbors(shared_from_this()))
 		Other->BecomeNeighbors(shared_from_this());
 }
 
@@ -136,6 +203,9 @@ void Node::CheckAndRemoveNeighbor(std::shared_ptr<Node> Other)
 		mNeighbors.erase(FindNodeInContainer(Other, mNeighbors));
 		Other->CheckAndRemoveNeighbor(shared_from_this());
 	}
+
+	if (mNeighbors.empty())
+		mPendingKill = true;
 }
 
 
@@ -192,18 +262,22 @@ int Node::GenerateRandomNumber()
 {
 	std::random_device RandomDevice;
 	std::mt19937 Rand(RandomDevice());
-	std::uniform_int_distribution<int> RandomDistribution;
+	std::uniform_int_distribution<int> RandomDistribution(-1000, 1000);
 
 	return RandomDistribution(Rand);
 }
 
 void Node::EventHandlerSum(int Sum, const Node& Other)
 {
-	std::cout << Other.mName << "->" << mName << ": " << Sum;
+	static int SavedSum;
+	SavedSum += Sum;
+	std::cout << Other.mName << "->" << mName << ": " << SavedSum << std::endl;
 }
 
 void Node::EventHandlerNumberOfEvents(int Num, const Node& Other)
 {
-	std::cout << Other.mName << "->" << mName << ": " << Num;
+	static int SavedNum;
+	SavedNum += Num;
+	std::cout << Other.mName << "->" << mName << ": " << SavedNum << std::endl;
 }
 

@@ -127,13 +127,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Factory.cpp" />
     <ClCompile Include="Node.cpp" />
-    <ClCompile Include="Preferences.cpp" />
+    <ClCompile Include="ActionPreferences.cpp" />
+    <ClCompile Include="NodeEnums.cpp" />
     <ClCompile Include="TestApp_EEGames.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Factory.h" />
     <ClInclude Include="Node.h" />
-    <ClInclude Include="Preferences.h" />
+    <ClInclude Include="ActionPreferences.h" />
+    <ClInclude Include="NodeEnums.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
