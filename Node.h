@@ -28,7 +28,7 @@ public:
 	friend bool operator== (const Node& Lhs, const Node& Rhs) {return Lhs == Rhs;}
 	friend bool operator!= (const Node& Lhs, const Node& Rhs) {return Lhs != Rhs;}
 
-	void Update();
+	void Update(const bool Active = true);
 	void CheckAndKill();
 
 	// === Actions ===
@@ -38,11 +38,11 @@ public:
 	void UnsubscribeFromNeighbor();
 	void UnsubscribeFromNeighbor(const std::shared_ptr<Node>& Other);
 	std::shared_ptr<Node> GenerateNewNeighbor();
-
-
+	
+	static void SetPreferences(ActionPreferences Preferences);
 
 	std::string GetName() const {return mName;}
-	ActionPreferences GetActionPreferences() const {return mActionPreferences;}
+	static ActionPreferences GetPreferences() {return mActionPreferences;}
 	const std::vector<std::weak_ptr<Node>>& GetNeighbors() const {return mNeighbors;}
 
 	bool CheckIsNeighbors(const std::shared_ptr<Node>& Other) const;
@@ -50,7 +50,7 @@ public:
 	bool CheckIsSubscriber(const std::shared_ptr<Node>& Other) const;
 
 	static std::list<std::shared_ptr<Node>> Nodes;
-	size_t ThisNodeIndex;
+	static ActionPreferences mActionPreferences;
 
 	std::unordered_map<std::string, NeighborsData> NeighborsDataMap;
 
@@ -58,7 +58,7 @@ private:
 	Node();
 
 	template<typename T>
-	Node(T&& Name, ActionPreferences Preferences, bool Active = true);
+	Node(T&& Name, bool Active = true);
 
 	
 
@@ -96,8 +96,7 @@ private:
 	static int mFactoryCounter;
 
 	std::string mName;
-	ActionPreferences mActionPreferences;
-
+	size_t mThisNodeIndex;
 
 	std::vector<std::weak_ptr<Node>> mNeighbors;
 	std::vector<std::weak_ptr<Node>> mSubscribers;

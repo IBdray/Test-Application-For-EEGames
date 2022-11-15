@@ -7,6 +7,7 @@
 
 
 int Node::mFactoryCounter = 0;
+ActionPreferences Node::mActionPreferences {};
 std::list<std::shared_ptr<Node>> Node::Nodes {};
 
 
@@ -15,7 +16,7 @@ std::shared_ptr<Node> Node::Create(Ts&&... Args)
 {
 	std::shared_ptr<Node> NewNode(new Node(std::forward<Ts>(Args)...));
 	Nodes.emplace_back(NewNode);
-	NewNode->ThisNodeIndex = Nodes.size() - 1;
+	NewNode->mThisNodeIndex = Nodes.size() - 1;
 
 	return NewNode;
 
@@ -28,22 +29,22 @@ std::shared_ptr<Node> Node::Create(Ts&&... Args)
 Node::Node()
 {
 	mName = "Node_" + std::to_string(mFactoryCounter++);
-	mActionPreferences = ActionPreferences(50);
 	mActive = false;
 	mPendingKill = false;
+	mThisNodeIndex = 0;
 }
 
 template<typename T>
-Node::Node(T&&Name, ActionPreferences Preferences, bool Active)
-	: mName(std::forward<T>(Name)), mActionPreferences(Preferences), mActive(Active), mPendingKill(false)
+Node::Node(T&&Name, bool Active)
+	: mThisNodeIndex(0), mName(std::forward<T>(Name)), mActive(Active), mPendingKill(false)
 {
 }
 
 
 
-void Node::Update()
+void Node::Update(const bool Active)
 {
-	if (mActive)
+	if (mActive && Active)
 	{
 		switch (mActionPreferences.GetRandomAction())
 		{
@@ -64,7 +65,7 @@ void Node::Update()
 			break;
 
 		case NodeActions::Sleep:
-			std::cout << GetName() << " sleeping" << std::endl;
+			//std::cout << GetName() << " sleeping" << std::endl;
 
 			break;
 		}
@@ -73,7 +74,7 @@ void Node::Update()
 	else
 	{
 		mActive = true;
-		std::cout << GetName() << " activated" << std::endl;
+		//std::cout << GetName() << " activated" << std::endl;
 	}
 
 	CheckAndKill();
@@ -85,12 +86,12 @@ void Node::CheckAndKill()
 	{
 		mActive = false;
 
-		std::cout << "\nDeleting " << GetName() << "\t\t| neighbors - "
+		/*std::cout << "\nDeleting " << GetName() << "\t\t| neighbors - "
 				  << mNeighbors.size() << ", subsTo - " << mSubscribedTo.size()
-				  << ", subs - " << mSubscribers.size() << std::endl;
+				  << ", subs - " << mSubscribers.size() << std::endl;*/
 		
 		auto ThisNode = Nodes.begin();
-		std::advance(ThisNode, ThisNodeIndex);
+		std::advance(ThisNode, mThisNodeIndex);
 		ThisNode->reset();
 	}
 	else
@@ -99,7 +100,7 @@ void Node::CheckAndKill()
 
 void Node::GenerateEvent()
 {
-	std::cout << GetName() << " generated event" << std::endl;
+	//std::cout << GetName() << " generated event" << std::endl;
 	const auto EventValue = GenerateRandomNumber();
 	for (const auto& Subscriber : mSubscribers)
 	{
@@ -138,7 +139,7 @@ void Node::SubscribeToNeighbor()
 					{
 						SubscribeTo(NeighborsNeighbor);
 
-						std::cout << GetName() << " subscribed to " << NeighborsNeighbor->GetName() << std::endl;
+						//std::cout << GetName() << " subscribed to " << NeighborsNeighbor->GetName() << std::endl;
 					}
 				}
 			}
@@ -146,13 +147,13 @@ void Node::SubscribeToNeighbor()
 			{
 				SubscribeTo(Neighbor);
 
-				std::cout << GetName() << " subscribed to " << Neighbor->GetName() << std::endl;
+				//std::cout << GetName() << " subscribed to " << Neighbor->GetName() << std::endl;
 			}
 		}
 	}
 	else
 	{
-		std::cout << GetName() << " subscription failed" << std:: endl;
+		//std::cout << GetName() << " subscription failed" << std:: endl;
 	}
 }
 
@@ -169,11 +170,11 @@ void Node::UnsubscribeFromNeighbor()
 		const auto Neighbor = mSubscribedTo[SubscribedIndex];
 		UnsubscribeFrom(Neighbor);
 
-		std::cout << GetName() << " unsubscribed from " << Neighbor->GetName() << std::endl;
+		//std::cout << GetName() << " unsubscribed from " << Neighbor->GetName() << std::endl;
 	}
 	else
 	{
-		std::cout << GetName() << " is not subscribed to anyone" << std::endl;
+		//std::cout << GetName() << " is not subscribed to anyone" << std::endl;
 	}
 }
 
@@ -188,8 +189,13 @@ std::shared_ptr<Node> Node::GenerateNewNeighbor()
 	auto Temp = Create();
 	SubscribeTo(Temp);
 
-	std::cout << Temp->GetName() << " was created by " << GetName() << std::endl;
+	//std::cout << Temp->GetName() << " was created by " << GetName() << std::endl;
 	return Temp;
+}
+
+void Node::SetPreferences(ActionPreferences Preferences)
+{
+	mActionPreferences = Preferences;
 }
 
 
