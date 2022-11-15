@@ -48,7 +48,7 @@ ActionPreferences::ActionPreferences(size_t EqualChance)
 {
 	mActionsMap[NodeActions::GenerateEvent] = EqualChance;
 	mActionsMap[NodeActions::SubscribeToNeighbor] = EqualChance;
-	mActionsMap[NodeActions::UnsubscribeFromNeighbor] = EqualChance;
+	mActionsMap[NodeActions::UnsubscribeFromNeighbor] = 2 * EqualChance;
 	mActionsMap[NodeActions::GenerateNewNeighbor] = EqualChance;
 	mActionsMap[NodeActions::Sleep] = EqualChance;
 

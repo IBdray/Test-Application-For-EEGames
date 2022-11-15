@@ -1,10 +1,14 @@
 #pragma once
 
-#include "vector"
-#include "string"
-#include "memory"
+#include <vector>
+#include <string>
+#include <memory>
+
+#include <list>
+#include <unordered_map>
 
 #include "ActionPreferences.h"
+#include "NeighborsData.h"
 
 
 enum class NodeActions;
@@ -25,13 +29,14 @@ public:
 	friend bool operator!= (const Node& Lhs, const Node& Rhs) {return Lhs != Rhs;}
 
 	void Update();
+	void CheckAndKill();
 
 	// === Actions ===
 	void GenerateEvent();
 	void SubscribeToNeighbor();
-	void SubscribeToNeighbor(std::shared_ptr<Node> Other);
+	void SubscribeToNeighbor(const std::shared_ptr<Node>& Other);
 	void UnsubscribeFromNeighbor();
-	void UnsubscribeFromNeighbor(std::shared_ptr<Node> Other);
+	void UnsubscribeFromNeighbor(const std::shared_ptr<Node>& Other);
 	std::shared_ptr<Node> GenerateNewNeighbor();
 
 
@@ -44,6 +49,11 @@ public:
 	bool CheckIsSubscribedTo(const std::shared_ptr<Node>& Other) const;
 	bool CheckIsSubscriber(const std::shared_ptr<Node>& Other) const;
 
+	static std::list<std::shared_ptr<Node>> Nodes;
+	size_t ThisNodeIndex;
+
+	std::unordered_map<std::string, NeighborsData> NeighborsDataMap;
+
 private:
 	Node();
 
@@ -53,14 +63,14 @@ private:
 	
 
 
-	std::shared_ptr<Node> SubscribeTo(std::shared_ptr<Node> Other);
-	std::shared_ptr<Node> UnsubscribeFrom(std::shared_ptr<Node> Other);
+	std::shared_ptr<Node> SubscribeTo(const std::shared_ptr<Node>& Other);
+	std::shared_ptr<Node> UnsubscribeFrom(const std::shared_ptr<Node>& Other);
 
-	void AddSubscriber(std::shared_ptr<Node> Other);
-	void RemoveSubscriber(std::shared_ptr<Node> Other);
+	void AddSubscriber(const std::shared_ptr<Node>& Other);
+	void RemoveSubscriber(const std::shared_ptr<Node>& Other);
 
-	void BecomeNeighbors(std::shared_ptr<Node> Other);
-	void CheckAndRemoveNeighbor(std::shared_ptr<Node> Other);
+	void BecomeNeighbors(const std::shared_ptr<Node>& Other);
+	void CheckAndRemoveNeighbor(const std::shared_ptr<Node>& Other);
 
 
 	void ReceiveEvent(int Value, const Node& Other);
@@ -75,12 +85,12 @@ private:
 
 
 
-	int GenerateRandomNumber();
+	static int GenerateRandomNumber(const int Min = -1000, const int Max = 1000);
 
 
 	//TODO: Refactor event handlers. Create event handler class and transfer all logic there
-	void EventHandlerSum(int Sum, const Node& Other);
-	void EventHandlerNumberOfEvents(int Num, const Node& Other);
+	void EventHandlerSum(const int Sum, const Node& Other);
+	void EventHandlerNumberOfEvents(const Node& Other);
 
 
 	static int mFactoryCounter;

@@ -2,29 +2,65 @@
 
 #include <iostream>
 #include <memory>
+#include <thread>
+#include <chrono>
+
+#include <windows.h>
+#include <random>
 
 #include "Node.h"
 
 
+bool IsKeyPressed(unsigned TimeoutMS = 0)
+{
+	return WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), TimeoutMS) == WAIT_OBJECT_0;
+}
+
+size_t GenerateRandomNumber(const size_t Min = 0, const size_t Max = 1000)
+{
+	std::random_device RandomDevice;
+	std::mt19937 Rand(RandomDevice());
+	std::uniform_int_distribution<size_t> RandomDistribution(Min, Max);
+
+	return RandomDistribution(Rand);
+}
+
 int main()
 {
-    auto n1 = Node::Create();
-    auto n2 = n1->GenerateNewNeighbor();
+    for (int i = 0; i < GenerateRandomNumber(0, 20); ++i)
+    {
+	    auto N = Node::Create();
+		for (int i = 0; i < GenerateRandomNumber(0, 10); ++i)
+		{
+			auto NN = N->GenerateNewNeighbor();
+			for (int i = 0; i < GenerateRandomNumber(0, 5); ++i)
+			{
+				auto NNN = NN->GenerateNewNeighbor();
+			}
+		}
+    }
+	
 
-	for (int i = 0; i < 500; ++i)
+
+	int CycleCounter = 0;
+
+	while (!IsKeyPressed())
 	{
-	    for (const auto& NodeTemp : n1->GetNeighbors())
+		int Size = 0;
+		for (const auto Temp : Node::Nodes)
 		{
-		    if (!NodeTemp.expired())
-		        NodeTemp.lock()->Update();
+			if (Temp)
+			{
+				Temp->Update();
+				Size += 1;
+			}
 		}
-		for (const auto& NodeTemp : n2->GetNeighbors())
-		{
-		    if (!NodeTemp.expired())
-		        NodeTemp.lock()->Update();
-		}
-	}
 
+		std::cout << "\n ======= Cycle " << ++CycleCounter << " =======\n"
+				  << "\tNumber of nodes: " << Size << std::endl << std::endl;
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	}
 
     std::cin.get();
 }

@@ -7,13 +7,21 @@
 
 
 int Node::mFactoryCounter = 0;
+std::list<std::shared_ptr<Node>> Node::Nodes {};
 
 
 template<typename ... Ts>
 std::shared_ptr<Node> Node::Create(Ts&&... Args)
 {
+	std::shared_ptr<Node> NewNode(new Node(std::forward<Ts>(Args)...));
+	Nodes.emplace_back(NewNode);
+	NewNode->ThisNodeIndex = Nodes.size() - 1;
+
+	return NewNode;
+
+
 	//std::make_shared throws errors so this is a work around
-	return std::shared_ptr<Node>(new Node(std::forward<Ts>(Args)...));
+	//return std::shared_ptr<Node>(new Node(std::forward<Ts>(Args)...));
 }
 
 
@@ -52,13 +60,11 @@ void Node::Update()
 			break;
 
 		case NodeActions::GenerateNewNeighbor:
-			std::cout << "Generate New Neighbor" << std::endl;
-
 			GenerateNewNeighbor();
 			break;
 
 		case NodeActions::Sleep:
-			std::cout << "Sleep" << std::endl;
+			std::cout << GetName() << " sleeping" << std::endl;
 
 			break;
 		}
@@ -67,13 +73,35 @@ void Node::Update()
 	else
 	{
 		mActive = true;
+		std::cout << GetName() << " activated" << std::endl;
 	}
+
+	CheckAndKill();
+}
+
+void Node::CheckAndKill()
+{
+	if (mPendingKill && mNeighbors.empty())
+	{
+		mActive = false;
+
+		std::cout << "\nDeleting " << GetName() << "\t\t| neighbors - "
+				  << mNeighbors.size() << ", subsTo - " << mSubscribedTo.size()
+				  << ", subs - " << mSubscribers.size() << std::endl;
+		
+		auto ThisNode = Nodes.begin();
+		std::advance(ThisNode, ThisNodeIndex);
+		ThisNode->reset();
+	}
+	else
+		mPendingKill = false;
 }
 
 void Node::GenerateEvent()
 {
-	auto EventValue = GenerateRandomNumber();
-	for (auto Subscriber : mSubscribers)
+	std::cout << GetName() << " generated event" << std::endl;
+	const auto EventValue = GenerateRandomNumber();
+	for (const auto& Subscriber : mSubscribers)
 	{
 		if (!Subscriber.expired())
 			Subscriber.lock()->ReceiveEvent(EventValue, *this);
@@ -83,9 +111,10 @@ void Node::GenerateEvent()
 
 void Node::ReceiveEvent(int Value, const Node& Other)
 {
-	// TODO: Save value to member variable
-	// maybe create a struct with ptr to subscribed node, sum of event values and number of received events
-	EventHandlerSum(Value, Other);
+	NeighborsDataMap[Other.GetName()].Sum += Value;
+	NeighborsDataMap[Other.GetName()].EventCounter += 1;
+
+	GenerateRandomNumber(0, 1) == 0 ? EventHandlerSum(Value, Other) : EventHandlerNumberOfEvents(Other);
 }
 
 
@@ -93,7 +122,7 @@ void Node::SubscribeToNeighbor()
 {
 	if (!mNeighbors.empty())
 	{
-		const auto NeighborIndex = GenerateRandomNumber() % mNeighbors.size();
+		const auto NeighborIndex = GenerateRandomNumber(0, static_cast<int>(mNeighbors.size()) - 1);
 
 		if (!mNeighbors[NeighborIndex].expired())
 		{
@@ -101,7 +130,7 @@ void Node::SubscribeToNeighbor()
 
 			if (!Neighbor->GetNeighbors().empty())
 			{
-				const auto NeighborsNeighborIndex = GenerateRandomNumber() % Neighbor->GetNeighbors().size();
+				const auto NeighborsNeighborIndex = GenerateRandomNumber(0, static_cast<int>(Neighbor->GetNeighbors().size()) - 1);
 				if (!Neighbor->GetNeighbors()[NeighborsNeighborIndex].expired())
 				{
 					const auto NeighborsNeighbor = Neighbor->GetNeighbors()[NeighborsNeighborIndex].lock();
@@ -113,11 +142,21 @@ void Node::SubscribeToNeighbor()
 					}
 				}
 			}
+			else
+			{
+				SubscribeTo(Neighbor);
+
+				std::cout << GetName() << " subscribed to " << Neighbor->GetName() << std::endl;
+			}
 		}
+	}
+	else
+	{
+		std::cout << GetName() << " subscription failed" << std:: endl;
 	}
 }
 
-void Node::SubscribeToNeighbor(std::shared_ptr<Node> Other)
+void Node::SubscribeToNeighbor(const std::shared_ptr<Node>& Other)
 {
 	SubscribeTo(Other);
 }
@@ -126,16 +165,19 @@ void Node::UnsubscribeFromNeighbor()
 {
 	if (!mSubscribedTo.empty())
 	{
-		const auto SubscribedIndex = GenerateRandomNumber() % mSubscribedTo.size();
+		const auto SubscribedIndex = GenerateRandomNumber(0, static_cast<int>(mSubscribedTo.size()) - 1);
 		const auto Neighbor = mSubscribedTo[SubscribedIndex];
-		
 		UnsubscribeFrom(Neighbor);
 
 		std::cout << GetName() << " unsubscribed from " << Neighbor->GetName() << std::endl;
 	}
+	else
+	{
+		std::cout << GetName() << " is not subscribed to anyone" << std::endl;
+	}
 }
 
-void Node::UnsubscribeFromNeighbor(std::shared_ptr<Node> Other)
+void Node::UnsubscribeFromNeighbor(const std::shared_ptr<Node>& Other)
 {
 	UnsubscribeFrom(Other);
 }
@@ -145,11 +187,13 @@ std::shared_ptr<Node> Node::GenerateNewNeighbor()
 	//TODO: fix memory limit issue for amount of nodes (maybe with exception handling)
 	auto Temp = Create();
 	SubscribeTo(Temp);
+
+	std::cout << Temp->GetName() << " was created by " << GetName() << std::endl;
 	return Temp;
 }
 
 
-std::shared_ptr<Node> Node::SubscribeTo(std::shared_ptr<Node> Other)
+std::shared_ptr<Node> Node::SubscribeTo(const std::shared_ptr<Node>& Other)
 {
 	if (Other && Other != shared_from_this() && !CheckIsSubscribedTo(Other))
 	{
@@ -160,18 +204,22 @@ std::shared_ptr<Node> Node::SubscribeTo(std::shared_ptr<Node> Other)
 	return Other;
 }
 
-std::shared_ptr<Node> Node::UnsubscribeFrom(std::shared_ptr<Node> Other)
+std::shared_ptr<Node> Node::UnsubscribeFrom(const std::shared_ptr<Node>& Other)
 {
 	if (Other && Other != shared_from_this() && CheckIsSubscribedTo(Other))
 	{
-		mSubscribedTo.erase(FindNodeInContainer(Other, mSubscribedTo));
+		const auto CreatorIt = FindNodeInContainer(Other, mSubscribedTo);
+		auto Creator = *CreatorIt;
+		Creator.reset();
+
+		mSubscribedTo.erase(CreatorIt);
 		Other->RemoveSubscriber(shared_from_this());
 		CheckAndRemoveNeighbor(Other);
 	}
 	return Other;
 }
 
-void Node::AddSubscriber(std::shared_ptr<Node> Other)
+void Node::AddSubscriber(const std::shared_ptr<Node>& Other)
 {
 	if (Other && Other != shared_from_this() && !CheckIsSubscriber(Other))
 	{
@@ -179,16 +227,20 @@ void Node::AddSubscriber(std::shared_ptr<Node> Other)
 	}
 }
 
-void Node::RemoveSubscriber(std::shared_ptr<Node> Other)
+void Node::RemoveSubscriber(const std::shared_ptr<Node>& Other)
 {
 	if (Other && Other != shared_from_this() && CheckIsSubscriber(Other))
 	{
-		mSubscribers.erase(FindNodeInContainer(Other, mSubscribers));
+		const auto SubscriberIt = FindNodeInContainer(Other, mSubscribers);
+		auto Subscriber = *SubscriberIt;
+
+		Subscriber.reset();
+		mSubscribers.erase(SubscriberIt);
 	}
 }
 
 
-void Node::BecomeNeighbors(std::shared_ptr<Node> Other)
+void Node::BecomeNeighbors(const std::shared_ptr<Node>& Other)
 {
 	if (Other && !CheckIsNeighbors(Other))
 		mNeighbors.emplace_back(Other);
@@ -196,11 +248,15 @@ void Node::BecomeNeighbors(std::shared_ptr<Node> Other)
 		Other->BecomeNeighbors(shared_from_this());
 }
 
-void Node::CheckAndRemoveNeighbor(std::shared_ptr<Node> Other)
+void Node::CheckAndRemoveNeighbor(const std::shared_ptr<Node>& Other)
 {
 	if (!Other->CheckIsSubscribedTo(shared_from_this()) && CheckIsNeighbors(Other))
 	{
-		mNeighbors.erase(FindNodeInContainer(Other, mNeighbors));
+		const auto NeighborIt = FindNodeInContainer(Other, mNeighbors);
+		auto Neighbor = *NeighborIt;
+
+		Neighbor.reset();
+		mNeighbors.erase(NeighborIt);
 		Other->CheckAndRemoveNeighbor(shared_from_this());
 	}
 
@@ -258,26 +314,22 @@ Node::SharedNodeIt Node::FindNodeInContainer(const std::shared_ptr<Node>& NodePt
 
 
 
-int Node::GenerateRandomNumber()
+int Node::GenerateRandomNumber(const int Min, const int Max)
 {
 	std::random_device RandomDevice;
 	std::mt19937 Rand(RandomDevice());
-	std::uniform_int_distribution<int> RandomDistribution(-1000, 1000);
+	std::uniform_int_distribution<int> RandomDistribution(Min, Max);
 
 	return RandomDistribution(Rand);
 }
 
-void Node::EventHandlerSum(int Sum, const Node& Other)
-{
-	static int SavedSum;
-	SavedSum += Sum;
-	std::cout << Other.mName << "->" << mName << ": " << SavedSum << std::endl;
+void Node::EventHandlerSum(const int Sum, const Node& Other)
+{	
+	std::cout << Other.mName << "->" << mName << ": S = " << NeighborsDataMap[Other.GetName()].Sum << std::endl;
 }
 
-void Node::EventHandlerNumberOfEvents(int Num, const Node& Other)
+void Node::EventHandlerNumberOfEvents(const Node& Other)
 {
-	static int SavedNum;
-	SavedNum += Num;
-	std::cout << Other.mName << "->" << mName << ": " << SavedNum << std::endl;
+	std::cout << Other.mName << "->" << mName << ": N = " << NeighborsDataMap[Other.GetName()].EventCounter << std::endl;
 }
 
