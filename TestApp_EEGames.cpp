@@ -1,7 +1,6 @@
 // Copyright 2022 Ivan Babanov, IB Dray. No Rights Reserved.
 
 #include <iostream>
-#include <memory>
 #include <thread>
 #include <chrono>
 
@@ -45,7 +44,7 @@ void GenerateDefaultNodes()
 {
 	for (int i = 0; i < GenerateRandomNumber(0, 20); ++i)
     {
-	    const auto FirstLine = Node::Create();
+	    const auto FirstLine = NodeFactory::Create();
 		for (int j = 0; j < GenerateRandomNumber(0, 10); ++j)
 		{
 			const auto SecondLine = FirstLine->GenerateNewNeighbor();
@@ -64,7 +63,7 @@ void Cycle()
 	while (!IsKeyPressed())
 	{
 		int NodesCounter = 0;
-		for (const auto& NodePtr : Node::Nodes)
+		for (const auto& NodePtr : NodeFactory::GetNodes())
 		{
 			if (NodePtr)
 			{

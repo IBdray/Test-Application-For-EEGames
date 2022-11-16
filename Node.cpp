@@ -6,37 +6,24 @@
 #include <random>
 
 
+
 int Node::mFactoryCounter = 0;
 ActionPreferences Node::mActionPreferences {};
-std::list<std::shared_ptr<Node>> Node::Nodes {};
 
-
-template<typename ... Ts>
-std::shared_ptr<Node> Node::Create(Ts&&... Args)
-{
-	std::shared_ptr<Node> NewNode(new Node(std::forward<Ts>(Args)...));
-	Nodes.emplace_back(NewNode);
-	NewNode->mThisNodeIndex = Nodes.size() - 1;
-
-	return NewNode;
-
-
-	//std::make_shared throws errors so this is a work around
-	//return std::shared_ptr<Node>(new Node(std::forward<Ts>(Args)...));
-}
+std::list<std::shared_ptr<Node>> NodeFactory::mNodesList {};
 
 
 Node::Node()
 {
 	mName = "Node_" + std::to_string(mFactoryCounter++);
+	mThisNodeIndex = 0;
 	mActive = false;
 	mPendingKill = false;
-	mThisNodeIndex = 0;
 }
 
 template<typename T>
 Node::Node(T&&Name, bool Active)
-	: mThisNodeIndex(0), mName(std::forward<T>(Name)), mActive(Active), mPendingKill(false)
+	: mName(std::forward<T>(Name)), mThisNodeIndex(0), mActive(Active), mPendingKill(false)
 {
 }
 
@@ -90,9 +77,7 @@ void Node::CheckAndKill()
 				  << mNeighbors.size() << ", subsTo - " << mSubscribedTo.size()
 				  << ", subs - " << mSubscribers.size() << std::endl;*/
 		
-		auto ThisNode = Nodes.begin();
-		std::advance(ThisNode, mThisNodeIndex);
-		ThisNode->reset();
+		NodeFactory::RemoveNode(mThisNodeIndex);
 	}
 	else
 		mPendingKill = false;
@@ -186,7 +171,7 @@ void Node::UnsubscribeFromNeighbor(const std::shared_ptr<Node>& Other)
 std::shared_ptr<Node> Node::GenerateNewNeighbor()
 {
 	//TODO: fix memory limit issue for amount of nodes (maybe with exception handling)
-	auto Temp = Create();
+	auto Temp = NodeFactory::Create();
 	SubscribeTo(Temp);
 
 	//std::cout << Temp->GetName() << " was created by " << GetName() << std::endl;

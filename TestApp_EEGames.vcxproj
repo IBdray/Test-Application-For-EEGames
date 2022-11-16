@@ -127,7 +127,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Factory.cpp" />
     <ClCompile Include="NeighborsData.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="ActionPreferences.cpp" />
@@ -135,7 +134,6 @@
     <ClCompile Include="TestApp_EEGames.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Factory.h" />
     <ClInclude Include="NeighborsData.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="ActionPreferences.h" />
