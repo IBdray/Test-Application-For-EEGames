@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include <list>
 #include <unordered_map>
@@ -18,10 +18,10 @@ class Node : public std::enable_shared_from_this<Node>
 {
 	using WeakNodeIt = std::vector<std::weak_ptr<Node>>::const_iterator;
 	using SharedNodeIt = std::vector<std::shared_ptr<Node>>::const_iterator;
+	using NodePtr = std::shared_ptr<Node>;
 
 
 	std::string mName;
-	size_t mThisNodeIndex;
 	bool mActive;
 	bool mPendingKill;
 
@@ -31,7 +31,50 @@ class Node : public std::enable_shared_from_this<Node>
 	std::vector<std::shared_ptr<Node>> mSubscribedTo;
 
 public:
-	friend class NodeFactory;
+	struct Factory
+	{
+		// TODO: fix memory limit issue for amount of nodes (maybe with exception handling)
+
+
+		template<typename... Ts>
+		static NodePtr CreateNode(Ts... Args)
+		{
+			// std::make_shared not working with private constructors
+			auto NewNode = NodePtr(new Node(std::forward<Ts>(Args)...));
+			Manager::AddNode(NewNode);
+			return NewNode;
+		}
+
+		template<typename... Ts>
+		static NodePtr CreateNeighborTo(const NodePtr& ParentNode, Ts... Args)
+		{
+			auto NewNode = CreateNode(std::forward<Ts>(Args)...);
+			ParentNode->SubscribeToNeighbor(NewNode);
+			return NewNode;
+		}
+	};
+
+	struct Manager
+	{
+		static const auto& GetNodes() {return mNodesList;}
+
+		static void AddNode(const NodePtr& NodePtr)
+		{
+			if (NodePtr)
+				mNodesList.emplace_back(NodePtr);
+		}
+
+		static void RemoveNode(const NodePtr& NodePtr)
+		{
+			if (NodePtr)
+				std::find(mNodesList.begin(),mNodesList.end(), NodePtr)->reset();
+		}
+
+	private:
+		// I use list instead of map because list do not need continuous memory for it's items
+		static std::list<NodePtr> mNodesList;
+
+	};
 
 	// Comparison operators
 	friend bool operator== (const Node& Lhs, const Node& Rhs) {return Lhs == Rhs;}
@@ -54,9 +97,6 @@ public:
 	void SubscribeToNeighbor(const std::shared_ptr<Node>& Other);
 	void UnsubscribeFromNeighbor();
 	void UnsubscribeFromNeighbor(const std::shared_ptr<Node>& Other);
-
-	// TODO: move it to factory class. Nodes shouldn't generate new nodes (?)
-	std::shared_ptr<Node> GenerateNewNeighbor();
 
 	// TODO: maybe it is better to move it to cycle manager, otherwise it is important part of the node
 	static void SetPreferences(ActionPreferences Preferences);
@@ -113,36 +153,5 @@ private:
 	// TODO: Refactor event handlers. Create event handler class and transfer all logic there
 	void EventHandlerSum(const int Sum, const Node& Other);
 	void EventHandlerNumberOfEvents(const Node& Other);
-
-	// Counter for name generation
-	static int mFactoryCounter;
-};
-
-
-class NodeFactory
-{
-
-	static std::list<std::shared_ptr<Node>> mNodesList;
-
-public:
-	template<typename... Ts>
-	static std::shared_ptr<Node> Create(Ts&& ... Args)
-	{
-		std::shared_ptr<Node> NewNode(new Node(std::forward<Ts>(Args)...));
-		mNodesList.emplace_back(NewNode);
-		NewNode->mThisNodeIndex = mNodesList.size() - 1;
-
-		return NewNode;
-	}
-
-
-	static const auto& GetNodes() {return mNodesList;}
-
-	static void RemoveNode(size_t NodeIndex)
-	{
-		auto NodeIt = mNodesList.begin();
-		std::advance(NodeIt, NodeIndex);
-		NodeIt->reset();
-	}
-
+	
 };

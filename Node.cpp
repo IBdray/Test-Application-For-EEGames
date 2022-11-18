@@ -6,24 +6,22 @@
 #include <random>
 
 
-
-int Node::mFactoryCounter = 0;
 ActionPreferences Node::mActionPreferences {};
 
-std::list<std::shared_ptr<Node>> NodeFactory::mNodesList {};
+std::list<std::shared_ptr<Node>> Node::Manager::mNodesList {};
 
 
 Node::Node()
 {
-	mName = "Node_" + std::to_string(mFactoryCounter++);
-	mThisNodeIndex = 0;
+	static int FactoryCounter;
+	mName = "Node_" + std::to_string(FactoryCounter++);
 	mActive = false;
 	mPendingKill = false;
 }
 
 template<typename T>
 Node::Node(T&&Name, bool Active)
-	: mName(std::forward<T>(Name)), mThisNodeIndex(0), mActive(Active), mPendingKill(false)
+	: mName(std::forward<T>(Name)), mActive(Active), mPendingKill(false)
 {
 }
 
@@ -48,7 +46,7 @@ void Node::Update(const bool Active)
 			break;
 
 		case NodeActions::GenerateNewNeighbor:
-			GenerateNewNeighbor();
+			Factory::CreateNeighborTo(shared_from_this());
 			break;
 
 		case NodeActions::Sleep:
@@ -77,7 +75,7 @@ void Node::CheckAndKill()
 				  << mNeighbors.size() << ", subsTo - " << mSubscribedTo.size()
 				  << ", subs - " << mSubscribers.size() << std::endl;*/
 		
-		NodeFactory::RemoveNode(mThisNodeIndex);
+		Manager::RemoveNode(shared_from_this());
 	}
 	else
 		mPendingKill = false;
@@ -166,16 +164,6 @@ void Node::UnsubscribeFromNeighbor()
 void Node::UnsubscribeFromNeighbor(const std::shared_ptr<Node>& Other)
 {
 	UnsubscribeFrom(Other);
-}
-
-std::shared_ptr<Node> Node::GenerateNewNeighbor()
-{
-	//TODO: fix memory limit issue for amount of nodes (maybe with exception handling)
-	auto Temp = NodeFactory::Create();
-	SubscribeTo(Temp);
-
-	//std::cout << Temp->GetName() << " was created by " << GetName() << std::endl;
-	return Temp;
 }
 
 void Node::SetPreferences(ActionPreferences Preferences)

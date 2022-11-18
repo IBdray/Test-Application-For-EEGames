@@ -44,13 +44,13 @@ void GenerateDefaultNodes()
 {
 	for (int i = 0; i < GenerateRandomNumber(0, 20); ++i)
     {
-	    const auto FirstLine = NodeFactory::Create();
+	    const auto FirstLine = Node::Factory::CreateNode();
 		for (int j = 0; j < GenerateRandomNumber(0, 10); ++j)
 		{
-			const auto SecondLine = FirstLine->GenerateNewNeighbor();
+			const auto SecondLine = Node::Factory::CreateNeighborTo(FirstLine);
 			for (int k = 0; k < GenerateRandomNumber(0, 5); ++k)
 			{
-				const auto ThirdLine = SecondLine->GenerateNewNeighbor();
+				const auto ThirdLine = Node::Factory::CreateNeighborTo(SecondLine);
 			}
 		}
     }
@@ -63,7 +63,7 @@ void Cycle()
 	while (!IsKeyPressed())
 	{
 		int NodesCounter = 0;
-		for (const auto& NodePtr : NodeFactory::GetNodes())
+		for (const auto& NodePtr : Node::Manager::GetNodes())
 		{
 			if (NodePtr)
 			{
