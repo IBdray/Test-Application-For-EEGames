@@ -12,6 +12,9 @@
 
 enum class NodeActions;
 
+template<typename T>
+struct Event;
+
 // main reason of this class is to generate events and receive other node's events
 // secondary is to be able to subscribe/unsubscribe to events of neighboring node
 class Node : public std::enable_shared_from_this<Node>
@@ -76,6 +79,8 @@ public:
 
 	};
 
+
+
 	// Comparison operators
 	friend bool operator== (const Node& Lhs, const Node& Rhs) {return Lhs == Rhs;}
 	friend bool operator!= (const Node& Lhs, const Node& Rhs) {return Lhs != Rhs;}
@@ -133,8 +138,8 @@ private:
 	void BecomeNeighbors(const std::shared_ptr<Node>& Other);
 	void CheckAndRemoveNeighbor(const std::shared_ptr<Node>& Other);
 
-
-	void ReceiveEvent(int Value, const Node& Other);
+	template<typename T>
+	void ReceiveEvent(const Event<T>&, const Node& Other);
 
 
 	// TODO: refactor this

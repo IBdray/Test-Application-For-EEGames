@@ -1,6 +1,7 @@
 #include "Node.h"
 #include "NodeEnums.h"
 #include "RandomGenerator.h"
+#include "Event.h"
 
 #include <algorithm>
 #include <iostream>
@@ -85,21 +86,21 @@ void Node::CheckAndKill()
 void Node::GenerateEvent()
 {
 	//std::cout << GetName() << " generated event" << std::endl;
-	const auto EventValue = RandomGenerator::GenerateNumber<int>(-1000, 1000);
+	const auto Event = NumberEvent();
 	for (const auto& Subscriber : mSubscribers)
 	{
 		if (!Subscriber.expired())
-			Subscriber.lock()->ReceiveEvent(EventValue, *this);
+			Subscriber.lock()->ReceiveEvent(Event, *this);
 	}
 }
 
-
-void Node::ReceiveEvent(int Value, const Node& Other)
+template<typename T>
+void Node::ReceiveEvent(const Event<T>& EventData, const Node& Other)
 {
-	NeighborsDataMap[Other.GetName()].Sum += Value;
+	NeighborsDataMap[Other.GetName()].Sum += EventData.GetData();
 	NeighborsDataMap[Other.GetName()].EventCounter += 1;
 
-	RandomGenerator::GenerateNumber(0, 1) == 0 ? EventHandlerSum(Value, Other) : EventHandlerNumberOfEvents(Other);
+	RandomGenerator::GenerateNumber(0, 1) == 0 ? EventHandlerSum(EventData.GetData(), Other) : EventHandlerNumberOfEvents(Other);
 }
 
 
