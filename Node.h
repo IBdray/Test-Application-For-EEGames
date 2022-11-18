@@ -149,9 +149,4 @@ private:
 	WeakNodeIt FindNodeInContainer(const std::shared_ptr<Node>& NodePtr, const std::vector<std::weak_ptr<Node>>& Container) const;
 	SharedNodeIt FindNodeInContainer(const std::shared_ptr<Node>& NodePtr, const std::vector<std::shared_ptr<Node>>& Container) const;
 
-
-	// TODO: Refactor event handlers. Create event handler class and transfer all logic there
-	void EventHandlerSum(const int Sum, const Node& Other);
-	void EventHandlerNumberOfEvents(const Node& Other);
-	
 };

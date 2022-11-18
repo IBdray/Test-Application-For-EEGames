@@ -2,6 +2,7 @@
 #include "NodeEnums.h"
 #include "RandomGenerator.h"
 #include "Event.h"
+#include "EventHandler.h"
 
 #include <algorithm>
 #include <iostream>
@@ -100,7 +101,8 @@ void Node::ReceiveEvent(const Event<T>& EventData, const Node& Other)
 	NeighborsDataMap[Other.GetName()].Sum += EventData.GetData();
 	NeighborsDataMap[Other.GetName()].EventCounter += 1;
 
-	RandomGenerator::GenerateNumber(0, 1) == 0 ? EventHandlerSum(EventData.GetData(), Other) : EventHandlerNumberOfEvents(Other);
+	const bool UseSumHandler = RandomGenerator::GenerateNumber(0, 1) == 0;
+	UseSumHandler ? SumHandler().Handle(Other, *this) : CountHandler().Handle(Other, *this);
 }
 
 
@@ -291,16 +293,3 @@ Node::SharedNodeIt Node::FindNodeInContainer(const std::shared_ptr<Node>& NodePt
 {
 	return std::find(Container.cbegin(), Container.cend(), NodePtr);
 }
-
-
-
-void Node::EventHandlerSum(const int Sum, const Node& Other)
-{	
-	std::cout << Other.mName << "->" << mName << ": S = " << NeighborsDataMap[Other.GetName()].Sum << std::endl;
-}
-
-void Node::EventHandlerNumberOfEvents(const Node& Other)
-{
-	std::cout << Other.mName << "->" << mName << ": N = " << NeighborsDataMap[Other.GetName()].EventCounter << std::endl;
-}
-
