@@ -1,9 +1,10 @@
 #include "Node.h"
 #include "NodeEnums.h"
+#include "RandomGenerator.h"
 
 #include <algorithm>
 #include <iostream>
-#include <random>
+
 
 
 ActionPreferences Node::mActionPreferences {};
@@ -84,7 +85,7 @@ void Node::CheckAndKill()
 void Node::GenerateEvent()
 {
 	//std::cout << GetName() << " generated event" << std::endl;
-	const auto EventValue = GenerateRandomNumber();
+	const auto EventValue = RandomGenerator::GenerateNumber<int>(-1000, 1000);
 	for (const auto& Subscriber : mSubscribers)
 	{
 		if (!Subscriber.expired())
@@ -98,7 +99,7 @@ void Node::ReceiveEvent(int Value, const Node& Other)
 	NeighborsDataMap[Other.GetName()].Sum += Value;
 	NeighborsDataMap[Other.GetName()].EventCounter += 1;
 
-	GenerateRandomNumber(0, 1) == 0 ? EventHandlerSum(Value, Other) : EventHandlerNumberOfEvents(Other);
+	RandomGenerator::GenerateNumber(0, 1) == 0 ? EventHandlerSum(Value, Other) : EventHandlerNumberOfEvents(Other);
 }
 
 
@@ -106,7 +107,7 @@ void Node::SubscribeToNeighbor()
 {
 	if (!mNeighbors.empty())
 	{
-		const auto NeighborIndex = GenerateRandomNumber(0, static_cast<int>(mNeighbors.size()) - 1);
+		const auto NeighborIndex = RandomGenerator::GenerateNumber(0, static_cast<int>(mNeighbors.size()) - 1);
 
 		if (!mNeighbors[NeighborIndex].expired())
 		{
@@ -114,7 +115,7 @@ void Node::SubscribeToNeighbor()
 
 			if (!Neighbor->GetNeighbors().empty())
 			{
-				const auto NeighborsNeighborIndex = GenerateRandomNumber(0, static_cast<int>(Neighbor->GetNeighbors().size()) - 1);
+				const auto NeighborsNeighborIndex = RandomGenerator::GenerateNumber(0, static_cast<int>(Neighbor->GetNeighbors().size()) - 1);
 				if (!Neighbor->GetNeighbors()[NeighborsNeighborIndex].expired())
 				{
 					const auto NeighborsNeighbor = Neighbor->GetNeighbors()[NeighborsNeighborIndex].lock();
@@ -149,7 +150,7 @@ void Node::UnsubscribeFromNeighbor()
 {
 	if (!mSubscribedTo.empty())
 	{
-		const auto SubscribedIndex = GenerateRandomNumber(0, static_cast<int>(mSubscribedTo.size()) - 1);
+		const auto SubscribedIndex = RandomGenerator::GenerateNumber(0, static_cast<int>(mSubscribedTo.size()) - 1);
 		const auto Neighbor = mSubscribedTo[SubscribedIndex];
 		UnsubscribeFrom(Neighbor);
 
@@ -291,16 +292,6 @@ Node::SharedNodeIt Node::FindNodeInContainer(const std::shared_ptr<Node>& NodePt
 }
 
 
-
-
-int Node::GenerateRandomNumber(const int Min, const int Max)
-{
-	std::random_device RandomDevice;
-	std::mt19937 Rand(RandomDevice());
-	std::uniform_int_distribution<int> RandomDistribution(Min, Max);
-
-	return RandomDistribution(Rand);
-}
 
 void Node::EventHandlerSum(const int Sum, const Node& Other)
 {	

@@ -5,16 +5,15 @@
 #include <chrono>
 
 #include <Windows.h>
-#include <random>
 
 #include "Node.h"
 #include "NodeEnums.h"
 #include "ActionPreferences.h"
+#include "RandomGenerator.h"
 
 
 
 bool IsKeyPressed(unsigned TimeoutMS = 0);
-int GenerateRandomNumber(const int Min = 0, const int Max = 1000);
 void GenerateDefaultNodes();
 void Cycle();
 ActionPreferences SetupPreferences();
@@ -31,24 +30,15 @@ bool IsKeyPressed(unsigned TimeoutMS)
 	return WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), TimeoutMS) == WAIT_OBJECT_0;
 }
 
-int GenerateRandomNumber(const int Min, const int Max)
-{
-	std::random_device RandomDevice;
-	std::mt19937 Rand(RandomDevice());
-	std::uniform_int_distribution<int> RandomDistribution(Min, Max);
-
-	return RandomDistribution(Rand);
-}
-
 void GenerateDefaultNodes()
 {
-	for (int i = 0; i < GenerateRandomNumber(0, 20); ++i)
+	for (int i = 0; i < RandomGenerator::GenerateNumber(0, 20); ++i)
     {
 	    const auto FirstLine = Node::Factory::CreateNode();
-		for (int j = 0; j < GenerateRandomNumber(0, 10); ++j)
+		for (int j = 0; j < RandomGenerator::GenerateNumber(0, 10); ++j)
 		{
 			const auto SecondLine = Node::Factory::CreateNeighborTo(FirstLine);
-			for (int k = 0; k < GenerateRandomNumber(0, 5); ++k)
+			for (int k = 0; k < RandomGenerator::GenerateNumber(0, 5); ++k)
 			{
 				const auto ThirdLine = Node::Factory::CreateNeighborTo(SecondLine);
 			}

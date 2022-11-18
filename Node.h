@@ -143,11 +143,6 @@ private:
 
 	WeakNodeIt FindNodeInContainer(const std::shared_ptr<Node>& NodePtr, const std::vector<std::weak_ptr<Node>>& Container) const;
 	SharedNodeIt FindNodeInContainer(const std::shared_ptr<Node>& NodePtr, const std::vector<std::shared_ptr<Node>>& Container) const;
-	
-
-
-	// TODO: create random number generator class
-	static int GenerateRandomNumber(const int Min = -1000, const int Max = 1000);
 
 
 	// TODO: Refactor event handlers. Create event handler class and transfer all logic there
