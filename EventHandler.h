@@ -2,21 +2,20 @@
 #include "Node.h"
 
 
-template<typename T>
 struct EventHandler
 {
-	virtual void Handle(const T& Author, const T& Subscriber) = 0;
+	virtual void Handle(const Node& Author, const Node& Subscriber) = 0;
 	virtual ~EventHandler() = default;
 };
 
-struct SumHandler : EventHandler<Node>
+struct SumHandler final : EventHandler
 {
 
 	SumHandler() = default;
 	virtual void Handle(const Node& Author, const Node& Subscriber) override;
 };
 
-struct CountHandler : EventHandler<Node>
+struct CountHandler final : EventHandler
 {
 	CountHandler() = default;
 	virtual void Handle(const Node& Author, const Node& Subscriber) override;

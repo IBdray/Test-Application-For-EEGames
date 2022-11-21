@@ -127,7 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Event.cpp" />
+    <ClCompile Include="EventBase.cpp" />
     <ClCompile Include="EventHandler.cpp" />
     <ClCompile Include="NeighborsData.cpp" />
     <ClCompile Include="Node.cpp" />
@@ -137,7 +137,7 @@
     <ClCompile Include="TestApp_EEGames.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Event.h" />
+    <ClInclude Include="EventBase.h" />
     <ClInclude Include="EventHandler.h" />
     <ClInclude Include="NeighborsData.h" />
     <ClInclude Include="Node.h" />

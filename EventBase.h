@@ -1,16 +1,16 @@
 #pragma once
 
 template<typename T>
-struct Event
+struct EventBase
 {
 	virtual T GetData() const = 0;
-	virtual ~Event() = default;
+	virtual ~EventBase() = default;
 
 protected:
 	T mData {0};
 };
 
-struct NumberEvent : public Event<int>
+struct NumberEvent : EventBase<int>
 {
 	NumberEvent();
 	virtual int GetData() const override;
