@@ -18,6 +18,29 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="private\ActionPreferences.cpp" />
+    <ClCompile Include="private\EventBase.cpp" />
+    <ClCompile Include="private\EventHandler.cpp" />
+    <ClCompile Include="private\Menu.cpp" />
+    <ClCompile Include="private\NeighborsData.cpp" />
+    <ClCompile Include="private\Node.cpp" />
+    <ClCompile Include="private\NodeEnums.cpp" />
+    <ClCompile Include="private\NodeManager.cpp" />
+    <ClCompile Include="private\RandomGenerator.cpp" />
+    <ClCompile Include="private\TestApp_EEGames.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="public\ActionPreferences.h" />
+    <ClInclude Include="public\EventBase.h" />
+    <ClInclude Include="public\EventHandler.h" />
+    <ClInclude Include="public\Menu.h" />
+    <ClInclude Include="public\NeighborsData.h" />
+    <ClInclude Include="public\Node.h" />
+    <ClInclude Include="public\NodeEnums.h" />
+    <ClInclude Include="public\NodeManager.h" />
+    <ClInclude Include="public\RandomGenerator.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

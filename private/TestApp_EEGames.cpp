@@ -6,11 +6,11 @@
 
 #include <Windows.h>
 
-#include "Node.h"
-#include "NodeEnums.h"
-#include "ActionPreferences.h"
-#include "RandomGenerator.h"
-#include "Menu.h"
+#include "../public/Node.h"
+#include "../public/NodeEnums.h"
+#include "../public/ActionPreferences.h"
+#include "../public/RandomGenerator.h"
+#include "../public/Menu.h"
 
 
 ActionPreferences SetupPreferences();

@@ -1,4 +1,4 @@
-#include "RandomGenerator.h"
+#include "../public/RandomGenerator.h"
 #include <random>
 
 int RandomGenerator::GenerateNumber(const int Min, const int Max)

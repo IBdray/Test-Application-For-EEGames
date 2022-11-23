@@ -1,8 +1,8 @@
-#include "Node.h"
-#include "NodeEnums.h"
-#include "RandomGenerator.h"
-#include "EventBase.h"
-#include "EventHandler.h"
+#include "../public/Node.h"
+#include "../public/NodeEnums.h"
+#include "../public/RandomGenerator.h"
+#include "../public/EventBase.h"
+#include "../public/EventHandler.h"
 
 #include <algorithm>
 #include <iostream>

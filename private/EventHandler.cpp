@@ -1,4 +1,4 @@
-#include "EventHandler.h"
+#include "../public/EventHandler.h"
 #include <iostream>
 
 

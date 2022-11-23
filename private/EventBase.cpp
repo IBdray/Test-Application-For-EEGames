@@ -1,5 +1,5 @@
-#include "EventBase.h"
-#include "RandomGenerator.h"
+#include "../public/EventBase.h"
+#include "../public/RandomGenerator.h"
 
 
 NumberEvent::NumberEvent()

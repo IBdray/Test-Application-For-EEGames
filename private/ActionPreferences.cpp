@@ -1,9 +1,8 @@
 #include <random>
 
-#include "ActionPreferences.h"
-#include "NodeEnums.h"
+#include "../public/ActionPreferences.h"
+#include "../public/NodeEnums.h"
 
-#include <iostream>
 
 void ActionPreferences::SetPreference(NodeActions Action, size_t Chance)
 {

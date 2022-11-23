@@ -1,7 +1,7 @@
-#include "Menu.h"
+#include "../public/Menu.h"
 
-#include "ActionPreferences.h"
-#include "NodeEnums.h"
+#include "../public/ActionPreferences.h"
+#include "../public/NodeEnums.h"
 
 bool Menu::Confirm()
 {
