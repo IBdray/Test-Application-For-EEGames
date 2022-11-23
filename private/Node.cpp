@@ -102,7 +102,8 @@ template<typename T>
 void Node::ReceiveEvent(const EventBase<T>& EventData, const Node& Other)
 {
 	mNeighborsDataMap[Other.GetName()].Sum += EventData.GetData();
-	mNeighborsDataMap[Other.GetName()].EventCounter += 1;
+	mNeighborsDataMap[Other.GetName()].Counter += 1;
+	//mNeighborsDataMap[Other.GetName()].Handler.target<>();
 
 	const bool UseSumHandler = RandomGenerator::GenerateNumber(0, 1) == 0;
 	UseSumHandler ? SumHandler().Handle(Other, *this) : CountHandler().Handle(Other, *this);

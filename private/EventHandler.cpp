@@ -12,5 +12,5 @@ void SumHandler::Handle(const Node& Author, const Node& Subscriber)
 void CountHandler::Handle(const Node& Author, const Node& Subscriber)
 {
 	std::cout << Author.GetName() << "->" << Subscriber.GetName()
-			  << ": N = " << Subscriber.GetNeighborsData().at(Author.GetName()).EventCounter << std::endl;
+			  << ": N = " << Subscriber.GetNeighborsData().at(Author.GetName()).Counter << std::endl;
 }

@@ -19,8 +19,6 @@ struct EventBase;
 // secondary is to be able to subscribe/unsubscribe to events of neighboring node
 class Node : public std::enable_shared_from_this<Node>
 {
-	using WeakNodeIt = std::vector<std::weak_ptr<Node>>::const_iterator;
-	using SharedNodeIt = std::vector<std::shared_ptr<Node>>::const_iterator;
 	using NodePtr = std::shared_ptr<Node>;
 
 

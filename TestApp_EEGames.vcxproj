@@ -126,25 +126,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="EventBase.cpp" />
-    <ClCompile Include="EventHandler.cpp" />
-    <ClCompile Include="NeighborsData.cpp" />
-    <ClCompile Include="Node.cpp" />
-    <ClCompile Include="ActionPreferences.cpp" />
-    <ClCompile Include="NodeEnums.cpp" />
-    <ClCompile Include="RandomGenerator.cpp" />
-    <ClCompile Include="TestApp_EEGames.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="EventBase.h" />
-    <ClInclude Include="EventHandler.h" />
-    <ClInclude Include="NeighborsData.h" />
-    <ClInclude Include="Node.h" />
-    <ClInclude Include="ActionPreferences.h" />
-    <ClInclude Include="NodeEnums.h" />
-    <ClInclude Include="RandomGenerator.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>
