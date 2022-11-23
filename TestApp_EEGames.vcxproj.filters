@@ -27,9 +27,6 @@
     <ClCompile Include="private\Menu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="private\AuthorsData.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="private\Node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -57,9 +54,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="public\Menu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="public\AuthorsData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="public\Node.h">

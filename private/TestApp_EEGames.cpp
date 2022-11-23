@@ -8,6 +8,7 @@
 
 #include "../public/Node.h"
 #include "../public/NodeEnums.h"
+#include "../public/NodeManager.h"
 #include "../public/ActionPreferences.h"
 #include "../public/RandomGenerator.h"
 #include "../public/Menu.h"
@@ -44,7 +45,7 @@ void Cycle()
 	while (!GetAsyncKeyState(VK_ESCAPE))
 	{
 		int NodesCounter = 0;
-		for (const auto& NodePtr : Node::Manager::GetNodes())
+		for (const auto& NodePtr : NodeManager::GetNodes())
 		{
 			if (NodePtr)
 			{

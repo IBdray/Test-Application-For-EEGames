@@ -20,8 +20,6 @@ struct AuthorsData
 	int Counter = 0;
 	std::unique_ptr<EventHandler> HandlerPtr;
 	std::weak_ptr<Node> AuthorPtr;
-
-	AuthorsData() = default;
 };
 
 
@@ -50,18 +48,6 @@ public:
 		static NodePtr CreateNeighborTo(const NodePtr& ParentNode, Ts... Args);
 	};
 
-	struct Manager
-	{
-		static const auto& GetNodes() {return mNodesList;}
-		static void AddNode(const NodePtr& NodePtr);
-		static void RemoveNode(const NodePtr& NodePtr);
-
-	private:
-		// I use list instead of map because list do not need continuous memory for it's items
-		static std::list<NodePtr> mNodesList;
-
-	};
-
 	// TODO: move update method to CycleManager class as SRP recommends (void Update(const Node& NodeRef) - to update any and all nodes in single class)
 	void Update(const bool Active = true);
 
@@ -80,7 +66,7 @@ public:
 	std::string GetName() const {return mName;}
 	static ActionPreferences GetPreferences() {return mActionPreferences;}
 	auto& GetNeighbors() const {return mNeighbors;}
-	auto& GetNeighborsData() const {return mAuthorsData;}
+	auto& GetAuthorsData() const {return mAuthorsData;}
 
 
 	bool IsNeighbors(const Node& Neighbor) const;

@@ -1,16 +1,13 @@
 #include "../public/Node.h"
 #include "../public/NodeEnums.h"
+#include "../public/NodeManager.h"
 #include "../public/RandomGenerator.h"
 #include "../public/EventBase.h"
 #include "../public/EventHandler.h"
 
 #include <algorithm>
-#include <iostream>
 
-
-
-ActionPreferences Node::mActionPreferences {}; 
-std::list<std::shared_ptr<Node>> Node::Manager::mNodesList {};
+ActionPreferences Node::mActionPreferences {};
 
 
 Node::Node()
@@ -32,7 +29,7 @@ Node::NodePtr Node::Factory::CreateNode(Ts... Args)
 {
 	// std::make_shared not working with private constructors
 	auto NewNode = NodePtr(new Node(std::forward<Ts>(Args)...));
-	Manager::AddNode(NewNode);
+	NodeManager::AddNode(NewNode);
 	return NewNode;
 }
 
@@ -42,19 +39,6 @@ Node::NodePtr Node::Factory::CreateNeighborTo(const NodePtr& ParentNode, Ts... A
 	auto NewNode = CreateNode(std::forward<Ts>(Args)...);
 	NewNode->SubscribeNeighbor(ParentNode);
 	return NewNode;
-}
-
-
-void Node::Manager::AddNode(const NodePtr& NodePtr)
-{
-	if (NodePtr)
-		mNodesList.emplace_back(NodePtr);
-}
-
-void Node::Manager::RemoveNode(const NodePtr& NodePtr)
-{
-	if (NodePtr)
-		std::find(mNodesList.begin(),mNodesList.end(), NodePtr)->reset();
 }
 
 
@@ -89,7 +73,7 @@ void Node::Update(const bool Active)
 
 void Node::Destroy()
 {
-	Manager::RemoveNode(shared_from_this());
+	NodeManager::RemoveNode(shared_from_this());
 }
 
 void Node::GenerateEvent() const

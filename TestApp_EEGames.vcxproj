@@ -23,7 +23,6 @@
     <ClCompile Include="private\EventBase.cpp" />
     <ClCompile Include="private\EventHandler.cpp" />
     <ClCompile Include="private\Menu.cpp" />
-    <ClCompile Include="private\AuthorsData.cpp" />
     <ClCompile Include="private\Node.cpp" />
     <ClCompile Include="private\NodeEnums.cpp" />
     <ClCompile Include="private\NodeManager.cpp" />
@@ -35,7 +34,6 @@
     <ClInclude Include="public\EventBase.h" />
     <ClInclude Include="public\EventHandler.h" />
     <ClInclude Include="public\Menu.h" />
-    <ClInclude Include="public\AuthorsData.h" />
     <ClInclude Include="public\Node.h" />
     <ClInclude Include="public\NodeEnums.h" />
     <ClInclude Include="public\NodeManager.h" />
