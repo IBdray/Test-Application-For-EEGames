@@ -1,38 +1,23 @@
-#include <random>
-
 #include "../public/ActionPreferences.h"
 #include "../public/NodeEnums.h"
+#include "../public/RandomGenerator.h"
 
 
-void ActionPreferences::SetPreference(NodeActions Action, size_t Chance)
+void ActionPreferences::SetPreference(const NodeActions& Action, const int Chance)
 {
 	mChancesSum += Chance - mActionsMap.at(Action);
 	mActionsMap[Action] = Chance;
 }
-void ActionPreferences::SetPreference(NodeHandlers Handler, size_t Chance)
-{
-	mChancesSum += Chance - mHandlersMap.at(Handler);
-	mHandlersMap[Handler] = Chance;
-}
 
-size_t ActionPreferences::GetPreference(NodeActions Action) const
+int ActionPreferences::GetPreference(const NodeActions& Action) const
 {
 	return mActionsMap.at(Action);
 }
 
-size_t ActionPreferences::GetPreference(NodeHandlers Handler) const
-{
-	return mHandlersMap.at(Handler);
-}
-
 NodeActions ActionPreferences::GetRandomAction() const
 {
-	std::random_device RandomDevice;
-	std::mt19937 Rand(RandomDevice());
-	std::uniform_int_distribution<size_t> RandomDistribution(0, mChancesSum);
-
-	size_t RandomNumber = RandomDistribution(Rand);
-	size_t Min = 0;
+	const int RandomNumber = RandomGenerator::GenerateNumber(0, mChancesSum);
+	int Min = 0;
 	for (auto& Action : mActionsMap)
 	{
 		if (RandomNumber >= Min && RandomNumber <= Action.second + Min)
@@ -43,16 +28,13 @@ NodeActions ActionPreferences::GetRandomAction() const
 	return NodeActions::GenerateEvent;
 }
 
-ActionPreferences::ActionPreferences(size_t EqualChance)
+ActionPreferences::ActionPreferences(const int EqualChance)
 {
 	mActionsMap[NodeActions::GenerateEvent] = EqualChance;
 	mActionsMap[NodeActions::SubscribeToNeighbor] = EqualChance;
-	mActionsMap[NodeActions::UnsubscribeFromNeighbor] = 2 * EqualChance;
+	mActionsMap[NodeActions::UnsubscribeFromNeighbor] = EqualChance;
 	mActionsMap[NodeActions::GenerateNewNeighbor] = EqualChance;
 	mActionsMap[NodeActions::Sleep] = EqualChance;
 
-	mHandlersMap[NodeHandlers::SumHandler] = EqualChance;
-	mHandlersMap[NodeHandlers::EventCounterHandler] = EqualChance;
-
-	mChancesSum = mActionsMap.size() * EqualChance;
+	mChancesSum = static_cast<int>(mActionsMap.size()) * EqualChance;
 }
