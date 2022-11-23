@@ -31,4 +31,8 @@ void NodeManager::UpdateNodes()
 		else
 			It = mNodes.erase(It);
 	}
+
+	for (const auto& Item : mNodes)
+		if (Item)
+			Item->SubmitUpdate();
 }

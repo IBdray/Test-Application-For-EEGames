@@ -30,9 +30,6 @@
     <ClCompile Include="private\Node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="private\NodeEnums.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="private\NodeManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

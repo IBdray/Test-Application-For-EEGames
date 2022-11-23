@@ -2,16 +2,11 @@
 
 enum class NodeActions
 {
+	Default,
 	GenerateEvent,
-	SubscribeToNeighbor,
-	UnsubscribeFromNeighbor,
+	SubscribeNeighbor,
+	UnsubscribeNeighbor,
 	GenerateNewNeighbor,
 	Sleep,
-};
-
-enum class NodeHandlers
-{
-	SumHandler,
-	EventCounterHandler,
 };
 

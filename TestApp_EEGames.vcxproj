@@ -24,7 +24,6 @@
     <ClCompile Include="private\EventHandler.cpp" />
     <ClCompile Include="private\Menu.cpp" />
     <ClCompile Include="private\Node.cpp" />
-    <ClCompile Include="private\NodeEnums.cpp" />
     <ClCompile Include="private\NodeManager.cpp" />
     <ClCompile Include="private\RandomGenerator.cpp" />
     <ClCompile Include="private\TestApp_EEGames.cpp" />

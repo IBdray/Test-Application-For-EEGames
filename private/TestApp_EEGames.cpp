@@ -29,10 +29,12 @@ void GenerateNodeNet(const int Size, const bool Random)
 	    const auto FirstLine = Node::Factory::CreateNode();
 		for (int j = 0; j < SecondLineSize; ++j)
 		{
-			const auto SecondLine = Node::Factory::CreateNeighborTo(FirstLine);
+			const auto SecondLine = Node::Factory::CreateNode();
+			SecondLine->Subscribe(FirstLine);
 			for (int k = 0; k < ThirdLineSize; ++k)
 			{
-				const auto ThirdLine = Node::Factory::CreateNeighborTo(SecondLine);
+				const auto ThirdLine = Node::Factory::CreateNode();
+				ThirdLine->Subscribe(SecondLine);
 			}
 		}
     }
@@ -69,7 +71,7 @@ ActionPreferences SetupEqualPreferences()
 	int Val;
 	std::cin >> Val;
 
-	const auto Preferences = ActionPreferences{static_cast<size_t>(Val)};
+	const auto Preferences = ActionPreferences{Val};
 
 	Menu::PrintPreferences(Preferences);
 	std::cout << "Confirm [Y/N]" << std::endl;
@@ -90,11 +92,11 @@ ActionPreferences SetupDetailedPreferences()
 	
 	std::cout << "Chance to subscribe to random neighbor of neighbor's neighbor: ";
 	std::cin >> Val;
-	Preferences.SetPreference(NodeActions::SubscribeToNeighbor, Val);
+	Preferences.SetPreference(NodeActions::SubscribeNeighbor, Val);
 
 	std::cout << "Chance to unsubscribe from random neighbor: ";
 	std::cin >> Val;
-	Preferences.SetPreference(NodeActions::UnsubscribeFromNeighbor, Val);
+	Preferences.SetPreference(NodeActions::UnsubscribeNeighbor, Val);
 	
 	std::cout << "Chance to create new neighbor node: ";
 	std::cin >> Val;

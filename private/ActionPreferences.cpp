@@ -31,8 +31,8 @@ NodeActions ActionPreferences::GetRandomAction() const
 ActionPreferences::ActionPreferences(const int EqualChance)
 {
 	mActionsMap[NodeActions::GenerateEvent] = EqualChance;
-	mActionsMap[NodeActions::SubscribeToNeighbor] = EqualChance;
-	mActionsMap[NodeActions::UnsubscribeFromNeighbor] = EqualChance;
+	mActionsMap[NodeActions::SubscribeNeighbor] = EqualChance;
+	mActionsMap[NodeActions::UnsubscribeNeighbor] = EqualChance;
 	mActionsMap[NodeActions::GenerateNewNeighbor] = EqualChance;
 	mActionsMap[NodeActions::Sleep] = EqualChance;
 

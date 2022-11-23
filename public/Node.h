@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "NodeEnums.h"
 #include "ActionPreferences.h"
 
 template<typename T>
@@ -37,6 +38,8 @@ class Node : public std::enable_shared_from_this<Node>
 	std::unordered_map<std::string, AuthorsData> mAuthorsData;
 	static ActionPreferences mActionPreferences;
 
+	std::pair<std::shared_ptr<Node>, NodeActions> mUpdateBuffer;
+
 public:
 	struct Factory
 	{
@@ -50,15 +53,19 @@ public:
 	friend bool operator!=(const Node& Lhs, const Node& Rhs);
 
 
-	void Update();
+	void Update(const bool Force = false, const NodeActions& Action = NodeActions::Default);
+	void SubmitUpdate();
 	bool CheckAndDestroy();
 
 	void GenerateEvent() const;
 	template<typename T>
 	void ReceiveEvent(const EventBase<T>&, const Node& Other);
 
-	void SubscribeNeighbor(const NodePtr& Subscriber = nullptr);
-	void UnsubscribeNeighbor(Node* Neighbor = nullptr);
+	NodePtr SubscribeNeighbor(const NodePtr& Subscriber = nullptr);
+	void Subscribe(const NodePtr& Subscriber);
+
+	NodePtr UnsubscribeNeighbor(Node* Neighbor = nullptr) const;
+	void Unsubscribe(Node& Subscriber);
 
 
 	static ActionPreferences GetPreferences() {return mActionPreferences;}
@@ -73,7 +80,8 @@ public:
 
 	bool IsNeighbors(const Node& Neighbor) const;
 	bool IsAuthor(const Node& Author) const;
-	bool IsSubscriber(const Node& Subscriber) const;	
+	bool IsSubscriber(const Node& Subscriber) const;
+	bool IsBufferEmpty() const;
 
 private:
 	Node();
@@ -81,11 +89,9 @@ private:
 	Node(T&& Name, bool Active = true);
 
 
-	void Subscribe(const NodePtr& Subscriber);
 	void AddAuthor(const NodePtr& Author);
 	void AddNeighbor(const NodePtr& Neighbor);
 
-	void Unsubscribe(Node& Subscriber);
 	void RemoveAuthor(const Node& Author);
 	void RemoveNeighbor(const Node& Neighbor);
 

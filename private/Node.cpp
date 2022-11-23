@@ -1,5 +1,4 @@
 #include "../public/Node.h"
-#include "../public/NodeEnums.h"
 #include "../public/NodeManager.h"
 #include "../public/RandomGenerator.h"
 #include "../public/EventBase.h"
@@ -37,37 +36,39 @@ template<typename ... Ts>
 Node::NodePtr Node::Factory::CreateNeighborTo(const NodePtr& ParentNode, Ts... Args)
 {
 	auto NewNode = CreateNode(std::forward<Ts>(Args)...);
-	NewNode->SubscribeNeighbor(ParentNode);
+	NewNode->Subscribe(ParentNode);
 	return NewNode;
 }
 
 
-void Node::Update()
+void Node::Update(const bool Force, const NodeActions& Action)
 {
-	if (mActive)
+	if (mActive || Force)
 	{
-		switch (mActionPreferences.GetRandomAction())
+		switch (Action == NodeActions::Default ? mActionPreferences.GetRandomAction() : Action)
 		{
 		case NodeActions::GenerateEvent:
 			GenerateEvent();
+			mUpdateBuffer = std::make_pair(nullptr, NodeActions::GenerateEvent);
 			break;
-		case NodeActions::SubscribeToNeighbor:
-			SubscribeNeighbor();
+		case NodeActions::SubscribeNeighbor:
+			mUpdateBuffer = std::make_pair(SubscribeNeighbor(), NodeActions::SubscribeNeighbor);
 			break;
-		case NodeActions::UnsubscribeFromNeighbor:
-			UnsubscribeNeighbor();
+		case NodeActions::UnsubscribeNeighbor:
+			mUpdateBuffer = std::make_pair(UnsubscribeNeighbor(), NodeActions::UnsubscribeNeighbor);
 			break;
 		case NodeActions::GenerateNewNeighbor:
-			Factory::CreateNeighborTo(shared_from_this());
+			mUpdateBuffer = std::make_pair(Factory::CreateNode(), NodeActions::GenerateNewNeighbor);
 			break;
 		case NodeActions::Sleep:
+			mUpdateBuffer = std::make_pair(nullptr, NodeActions::Sleep);
+			break;
+		case NodeActions::Default:
 			break;
 		}
 	}
-	else
-		mActive = true;
 
-	CheckAndDestroy();
+	mActive = true;
 }
 
 bool Node::CheckAndDestroy()
@@ -79,6 +80,34 @@ bool Node::CheckAndDestroy()
 	}
 	return false;
 }
+
+void Node::SubmitUpdate()
+{
+	if (mUpdateBuffer.first)
+	{
+		switch (mUpdateBuffer.second)
+		{
+		case NodeActions::GenerateNewNeighbor:
+			mUpdateBuffer.first->Subscribe(shared_from_this());
+			break;
+		case NodeActions::SubscribeNeighbor:
+			Subscribe(mUpdateBuffer.first);
+			break;
+		case NodeActions::UnsubscribeNeighbor:
+			Unsubscribe(*mUpdateBuffer.first);
+			break;
+		case NodeActions::GenerateEvent:
+		case NodeActions::Sleep:
+		case NodeActions::Default:
+			break;
+		}
+
+		mUpdateBuffer.first.reset();
+		mUpdateBuffer = {};
+	}
+	CheckAndDestroy();
+}
+
 
 void Node::GenerateEvent() const
 {
@@ -95,42 +124,44 @@ void Node::ReceiveEvent(const EventBase<T>& EventData, const Node& Other)
 }
 
 
-void Node::SubscribeNeighbor(const NodePtr& Subscriber)
+Node::NodePtr Node::SubscribeNeighbor(const NodePtr& Subscriber)
 {
 	if (!mNeighbors.empty() && !Subscriber)
 	{
 		const auto NeighborIndex = RandomGenerator::GenerateNumber(0, static_cast<int>(mNeighbors.size()) - 1);
 		if (!mNeighbors[NeighborIndex].expired())
 		{
-			const auto Neighbor = mNeighbors[NeighborIndex].lock();
+			auto Neighbor = mNeighbors[NeighborIndex].lock();
 			if (!Neighbor->GetNeighbors().empty())
 			{
 				const auto NeighborsNeighborIndex = RandomGenerator::GenerateNumber(0, static_cast<int>(Neighbor->GetNeighbors().size()) - 1);
 				if (!Neighbor->GetNeighbors()[NeighborsNeighborIndex].expired())
 				{
-					const auto NeighborsNeighbor = Neighbor->GetNeighbors()[NeighborsNeighborIndex].lock();
+					auto NeighborsNeighbor = Neighbor->GetNeighbors()[NeighborsNeighborIndex].lock();
 					if (NeighborsNeighbor != shared_from_this())
-						Subscribe(NeighborsNeighbor);
+						return NeighborsNeighbor;
 				}
 			}
 			else
-				Subscribe(Neighbor);
+				return Neighbor;
 		}
 	}
 	else if (Subscriber)
-		Subscribe(Subscriber);
+		return Subscriber;
+	return nullptr;
 }
 
-void Node::UnsubscribeNeighbor(Node* Neighbor)
+Node::NodePtr Node::UnsubscribeNeighbor(Node* Neighbor) const
 {
 	if (!mAuthors.empty() && !Neighbor)
 	{
 		const auto Author = RandomGenerator::GenerateNumber(0, static_cast<int>(mAuthors.size()) - 1);
-		if (!mAuthors[Author].expired()) 
-			Unsubscribe(*mAuthors[Author].lock());
+		if (!mAuthors[Author].expired())
+			return mAuthors[Author].lock();
 	}
 	else if (Neighbor)
-		Unsubscribe(*Neighbor);
+		return NodePtr(Neighbor);
+	return nullptr;
 }
 
 
@@ -210,6 +241,11 @@ bool Node::IsAuthor(const Node& Author) const
 bool Node::IsSubscriber(const Node& Subscriber) const
 {
 	return FindNodeInContainer(Subscriber, mSubscribers) != mSubscribers.cend();
+}
+
+bool Node::IsBufferEmpty() const
+{
+	return mUpdateBuffer.first == nullptr;
 }
 
 template<typename T>
