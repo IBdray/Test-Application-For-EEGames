@@ -37,6 +37,31 @@ void GenerateNodeNet(const int Size, const bool Random)
     }
 }
 
+void Cycle()
+{
+	int CycleCounter = 0;
+
+	while (!GetAsyncKeyState(VK_ESCAPE))
+	{
+		int NodesCounter = 0;
+		for (const auto& NodePtr : Node::Manager::GetNodes())
+		{
+			if (NodePtr)
+			{
+				NodePtr->Update();
+				NodesCounter += 1;
+
+				std::this_thread::sleep_for(std::chrono::milliseconds(5));
+			}
+		}
+
+		std::cout << "\n ======= Cycle " << ++CycleCounter << " =======\n"
+				  << "Number of remaining nodes: " << NodesCounter << std::endl << std::endl;
+
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+}
+
 ActionPreferences SetupPreferences()
 {
 	std::cout << "You can make all action equally possible or enter specific chance to each." << std::endl;
@@ -95,7 +120,7 @@ ActionPreferences SetupDetailedPreferences()
 void SetupInitialNet()
 {
 	bool Random = true;
-	int Size = 100;
+	int Size = 50;
 
 	std::cout << "\n=====================================" << std::endl;
 	std::cout << "Use default settings for initial node net? [Y/N]" << std::endl;
@@ -111,37 +136,25 @@ void SetupInitialNet()
 	GenerateNodeNet(Size, Random);
 }
 
+void AppLoop()
+{
+	Node::SetPreferences(SetupPreferences());
+	SetupInitialNet();
+	Cycle();
 
+	std::cout << "\n=====================================" << std::endl;
+	std::cout << "Restart application? [Y/N]" << std::endl;
+
+	if (Menu::Confirm())
+		AppLoop();
+}
 
 int main()
 {
 	std::cout << "App created by Ivan Babanov, IB Dray for EEGames" << std::endl;
 	std::cout << "Press ESC to stop execution." << std::endl << std::endl;
-	
-	Node::SetPreferences(SetupPreferences());
-	SetupInitialNet();
 
-	int CycleCounter = 0;
-
-	while (!GetAsyncKeyState(VK_ESCAPE))
-	{
-		int NodesCounter = 0;
-		for (const auto& NodePtr : Node::Manager::GetNodes())
-		{
-			if (NodePtr)
-			{
-				NodePtr->Update();
-				NodesCounter += 1;
-
-				std::this_thread::sleep_for(std::chrono::milliseconds(5));
-			}
-		}
-
-		std::cout << "\n ======= Cycle " << ++CycleCounter << " =======\n"
-				  << "Number of remaining nodes: " << NodesCounter << std::endl << std::endl;
-
-		std::this_thread::sleep_for(std::chrono::seconds(1));
-	}
+	AppLoop();	
 
     std::cin.get();
 }

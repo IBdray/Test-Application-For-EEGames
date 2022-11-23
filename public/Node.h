@@ -8,15 +8,23 @@
 #include <unordered_map>
 
 #include "ActionPreferences.h"
-#include "NeighborsData.h"
-
-enum class NodeActions;
 
 template<typename T>
 struct EventBase;
+struct EventHandler;
+class Node;
 
-// main reason of this class is to generate events and receive other node's events
-// secondary is to be able to subscribe/unsubscribe to events of neighboring node
+struct AuthorsData
+{
+	int Sum = 0;
+	int Counter = 0;
+	std::unique_ptr<EventHandler> HandlerPtr;
+	std::weak_ptr<Node> AuthorPtr;
+
+	AuthorsData() = default;
+};
+
+
 class Node : public std::enable_shared_from_this<Node>
 {
 	using NodePtr = std::shared_ptr<Node>;
@@ -29,15 +37,13 @@ class Node : public std::enable_shared_from_this<Node>
 	std::vector<std::shared_ptr<Node>> mSubscribers;
 	std::vector<std::weak_ptr<Node>> mAuthors;
 
-	// TODO: maybe unite with subscribed to array (add pointer to creator to NeighborsData struct)
-	std::unordered_map<std::string, NeighborsData> mNeighborsDataMap;
+	// Authors Data map will serve as additional data
+	std::unordered_map<std::string, AuthorsData> mAuthorsData;
 	static ActionPreferences mActionPreferences;
 
 public:
 	struct Factory
 	{
-		// TODO: fix memory limit issue for amount of nodes (maybe with exception handling)
-
 		template<typename... Ts>
 		static NodePtr CreateNode(Ts... Args);
 		template<typename... Ts>
@@ -59,7 +65,6 @@ public:
 	// TODO: move update method to CycleManager class as SRP recommends (void Update(const Node& NodeRef) - to update any and all nodes in single class)
 	void Update(const bool Active = true);
 
-	// === Actions ===
 	void GenerateEvent() const;
 
 	template<typename T>
@@ -75,7 +80,7 @@ public:
 	std::string GetName() const {return mName;}
 	static ActionPreferences GetPreferences() {return mActionPreferences;}
 	auto& GetNeighbors() const {return mNeighbors;}
-	auto& GetNeighborsData() const {return mNeighborsDataMap;}
+	auto& GetNeighborsData() const {return mAuthorsData;}
 
 
 	bool IsNeighbors(const Node& Neighbor) const;
@@ -106,6 +111,8 @@ private:
 	void Unsubscribe(Node& Subscriber);
 	void RemoveAuthor(const Node& Author);
 	void RemoveNeighbor(const Node& Neighbor);
+
+	void SetEventHandler(const std::shared_ptr<Node>& Author);
 
 
 	template<typename C>

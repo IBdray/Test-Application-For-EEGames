@@ -101,12 +101,9 @@ void Node::GenerateEvent() const
 template<typename T>
 void Node::ReceiveEvent(const EventBase<T>& EventData, const Node& Other)
 {
-	mNeighborsDataMap[Other.GetName()].Sum += EventData.GetData();
-	mNeighborsDataMap[Other.GetName()].Counter += 1;
-	//mNeighborsDataMap[Other.GetName()].Handler.target<>();
-
-	const bool UseSumHandler = RandomGenerator::GenerateNumber(0, 1) == 0;
-	UseSumHandler ? SumHandler().Handle(Other, *this) : CountHandler().Handle(Other, *this);
+	mAuthorsData[Other.GetName()].Sum += EventData.GetData();
+	mAuthorsData[Other.GetName()].Counter += 1;
+	mAuthorsData[Other.GetName()].HandlerPtr->Handle(Other, *this);
 }
 
 
@@ -163,7 +160,9 @@ void Node::AddAuthor(const std::shared_ptr<Node>& Author)
 	if (Author && Author != shared_from_this() && !IsAuthor(*Author))
 	{
 		mAuthors.emplace_back(Author);
+		SetEventHandler(Author);
 		AddNeighbor(Author);
+
 	}
 }
 
@@ -200,6 +199,14 @@ void Node::RemoveNeighbor(const Node& Neighbor)
 	const auto NodeIt = FindNodeInContainer(Neighbor, mNeighbors);
 	if (NodeIt != mNeighbors.end())
 		ResetAndEraseNode(NodeIt, mNeighbors);
+}
+
+void Node::SetEventHandler(const std::shared_ptr<Node>& Author)
+{
+	if (RandomGenerator::GenerateNumber(0, 1) == 0)
+		mAuthorsData[Author->GetName()].HandlerPtr = std::make_unique<SumHandler>();
+	else
+		mAuthorsData[Author->GetName()].HandlerPtr = std::make_unique<CountHandler>();
 }
 
 
