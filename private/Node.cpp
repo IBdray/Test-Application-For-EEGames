@@ -42,9 +42,9 @@ Node::NodePtr Node::Factory::CreateNeighborTo(const NodePtr& ParentNode, Ts... A
 }
 
 
-void Node::Update(const bool Active)
+void Node::Update()
 {
-	if (mActive && Active)
+	if (mActive)
 	{
 		switch (mActionPreferences.GetRandomAction())
 		{
@@ -55,7 +55,7 @@ void Node::Update(const bool Active)
 			SubscribeNeighbor();
 			break;
 		case NodeActions::UnsubscribeFromNeighbor:
-			UnsubscribeNeighbor(nullptr);
+			UnsubscribeNeighbor();
 			break;
 		case NodeActions::GenerateNewNeighbor:
 			Factory::CreateNeighborTo(shared_from_this());
@@ -67,13 +67,17 @@ void Node::Update(const bool Active)
 	else
 		mActive = true;
 
-	if (mNeighbors.empty())
-		Destroy();
+	CheckAndDestroy();
 }
 
-void Node::Destroy()
+bool Node::CheckAndDestroy()
 {
-	NodeManager::RemoveNode(shared_from_this());
+	if (mNeighbors.empty())
+	{
+		NodeManager::RemoveNode(shared_from_this());
+		return true;
+	}
+	return false;
 }
 
 void Node::GenerateEvent() const
@@ -91,7 +95,7 @@ void Node::ReceiveEvent(const EventBase<T>& EventData, const Node& Other)
 }
 
 
-void Node::SubscribeNeighbor(const std::shared_ptr<Node>& Subscriber)
+void Node::SubscribeNeighbor(const NodePtr& Subscriber)
 {
 	if (!mNeighbors.empty() && !Subscriber)
 	{
@@ -122,14 +126,15 @@ void Node::UnsubscribeNeighbor(Node* Neighbor)
 	if (!mAuthors.empty() && !Neighbor)
 	{
 		const auto Author = RandomGenerator::GenerateNumber(0, static_cast<int>(mAuthors.size()) - 1);
-		Unsubscribe(*mAuthors[Author].lock());
+		if (!mAuthors[Author].expired()) 
+			Unsubscribe(*mAuthors[Author].lock());
 	}
 	else if (Neighbor)
 		Unsubscribe(*Neighbor);
 }
 
 
-void Node::Subscribe(const std::shared_ptr<Node>& Subscriber)
+void Node::Subscribe(const NodePtr& Subscriber)
 {
 	if (Subscriber && Subscriber != shared_from_this() && !IsSubscriber(*Subscriber))
 	{
@@ -139,7 +144,7 @@ void Node::Subscribe(const std::shared_ptr<Node>& Subscriber)
 	}
 }
 
-void Node::AddAuthor(const std::shared_ptr<Node>& Author)
+void Node::AddAuthor(const NodePtr& Author)
 {
 	if (Author && Author != shared_from_this() && !IsAuthor(*Author))
 	{
@@ -150,7 +155,7 @@ void Node::AddAuthor(const std::shared_ptr<Node>& Author)
 	}
 }
 
-void Node::AddNeighbor(const std::shared_ptr<Node>& Neighbor)
+void Node::AddNeighbor(const NodePtr& Neighbor)
 {
 	if (Neighbor && Neighbor != shared_from_this() && !IsNeighbors(*Neighbor))
 		mNeighbors.emplace_back(Neighbor);
@@ -185,7 +190,7 @@ void Node::RemoveNeighbor(const Node& Neighbor)
 		ResetAndEraseNode(NodeIt, mNeighbors);
 }
 
-void Node::SetEventHandler(const std::shared_ptr<Node>& Author)
+void Node::SetEventHandler(const NodePtr& Author)
 {
 	if (RandomGenerator::GenerateNumber(0, 1) == 0)
 		mAuthorsData[Author->GetName()].HandlerPtr = std::make_unique<SumHandler>();
@@ -228,7 +233,7 @@ void Node::ResetAndEraseNode(const I& It, C& Container)
 }
 
 
-void Node::SetPreferences(ActionPreferences Preferences)
+void Node::SetPreferences(ActionPreferences&& Preferences)
 {
-	mActionPreferences = Preferences;
+	mActionPreferences = std::move(Preferences);
 }

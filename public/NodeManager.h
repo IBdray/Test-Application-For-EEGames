@@ -14,6 +14,7 @@ class NodeManager
 public:
 	static void AddNode(const NodePtr& NodePtr);
 	static void RemoveNode(const NodePtr& NodePtr);
+	static void UpdateNodes();
 	static const auto& GetNodes() {return mNodes;}
 
 };

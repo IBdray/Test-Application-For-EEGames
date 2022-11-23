@@ -2,10 +2,8 @@
 
 #include <memory>
 #include <string>
-#include <vector>
-
-#include <list>
 #include <unordered_map>
+#include <vector>
 
 #include "ActionPreferences.h"
 
@@ -32,7 +30,7 @@ class Node : public std::enable_shared_from_this<Node>
 	bool mActive;
 
 	std::vector<std::weak_ptr<Node>> mNeighbors;
-	std::vector<std::shared_ptr<Node>> mSubscribers;
+	std::vector<NodePtr> mSubscribers;
 	std::vector<std::weak_ptr<Node>> mAuthors;
 
 	// Authors Data map will serve as additional data
@@ -48,57 +46,50 @@ public:
 		static NodePtr CreateNeighborTo(const NodePtr& ParentNode, Ts... Args);
 	};
 
-	// TODO: move update method to CycleManager class as SRP recommends (void Update(const Node& NodeRef) - to update any and all nodes in single class)
-	void Update(const bool Active = true);
+	friend bool operator==(const Node& Lhs, const Node& Rhs);
+	friend bool operator!=(const Node& Lhs, const Node& Rhs);
+
+
+	void Update();
+	bool CheckAndDestroy();
 
 	void GenerateEvent() const;
-
 	template<typename T>
 	void ReceiveEvent(const EventBase<T>&, const Node& Other);
 
-
-	void SubscribeNeighbor(const std::shared_ptr<Node>& Subscriber = nullptr);
+	void SubscribeNeighbor(const NodePtr& Subscriber = nullptr);
 	void UnsubscribeNeighbor(Node* Neighbor = nullptr);
 
-	// TODO: maybe it is better to move it to cycle manager, otherwise it is important part of the node
-	static void SetPreferences(ActionPreferences Preferences);
+
+	static ActionPreferences GetPreferences() {return mActionPreferences;}
+	static void SetPreferences(ActionPreferences&& Preferences);
 
 	std::string GetName() const {return mName;}
-	static ActionPreferences GetPreferences() {return mActionPreferences;}
 	auto& GetNeighbors() const {return mNeighbors;}
+	auto& GetSubscribers() const {return mSubscribers;}
+	auto& GetAuthors() const {return mAuthors;}
 	auto& GetAuthorsData() const {return mAuthorsData;}
 
 
 	bool IsNeighbors(const Node& Neighbor) const;
 	bool IsAuthor(const Node& Author) const;
-	bool IsSubscriber(const Node& Subscriber) const;
-
-
-	friend bool operator==(const Node& Lhs, const Node& Rhs)
-	{
-		return Lhs.GetName() == Rhs.GetName();
-	}
-	friend bool operator!=(const Node& Lhs, const Node& Rhs)
-	{
-		return !(Lhs == Rhs);
-	}
+	bool IsSubscriber(const Node& Subscriber) const;	
 
 private:
 	Node();
 	template<typename T>
 	Node(T&& Name, bool Active = true);
-	void Destroy();
 
 
-	void Subscribe(const std::shared_ptr<Node>& Subscriber);
-	void AddAuthor(const std::shared_ptr<Node>& Author);
-	void AddNeighbor(const std::shared_ptr<Node>& Neighbor);
+	void Subscribe(const NodePtr& Subscriber);
+	void AddAuthor(const NodePtr& Author);
+	void AddNeighbor(const NodePtr& Neighbor);
 
 	void Unsubscribe(Node& Subscriber);
 	void RemoveAuthor(const Node& Author);
 	void RemoveNeighbor(const Node& Neighbor);
 
-	void SetEventHandler(const std::shared_ptr<Node>& Author);
+	void SetEventHandler(const NodePtr& Author);
 
 
 	template<typename C>
@@ -107,3 +98,14 @@ private:
 	void ResetAndEraseNode(const I& It, C& Container);
 
 };
+
+
+inline bool operator==(const Node& Lhs, const Node& Rhs)
+{
+	return Lhs.GetName() == Rhs.GetName();
+}
+
+inline bool operator!=(const Node& Lhs, const Node& Rhs)
+{
+	return !(Lhs == Rhs);
+}

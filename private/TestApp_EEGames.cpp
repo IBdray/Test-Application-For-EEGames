@@ -44,20 +44,10 @@ void Cycle()
 
 	while (!GetAsyncKeyState(VK_ESCAPE))
 	{
-		int NodesCounter = 0;
-		for (const auto& NodePtr : NodeManager::GetNodes())
-		{
-			if (NodePtr)
-			{
-				NodePtr->Update();
-				NodesCounter += 1;
-
-				std::this_thread::sleep_for(std::chrono::milliseconds(5));
-			}
-		}
+		NodeManager::UpdateNodes();
 
 		std::cout << "\n ======= Cycle " << ++CycleCounter << " =======\n"
-				  << "Number of remaining nodes: " << NodesCounter << std::endl << std::endl;
+				  << "Number of remaining nodes: " <<  NodeManager::GetNodes().size() << std::endl << std::endl;
 
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}

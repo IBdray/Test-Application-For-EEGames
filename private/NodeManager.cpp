@@ -14,3 +14,21 @@ void NodeManager::RemoveNode(const NodePtr& NodePtr)
 	if (NodePtr)
 		std::find(mNodes.begin(),mNodes.end(), NodePtr)->reset();
 }
+
+void NodeManager::UpdateNodes()
+{
+	auto It = mNodes.cbegin();
+	const auto End = mNodes.cend();
+
+	while (It != End)
+	{
+		auto& Item = *It;
+		if (Item)
+		{
+			Item->Update();
+			++It;
+		}
+		else
+			It = mNodes.erase(It);
+	}
+}
