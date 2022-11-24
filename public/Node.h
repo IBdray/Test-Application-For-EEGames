@@ -13,6 +13,7 @@ struct EventBase;
 struct EventHandler;
 class Node;
 
+
 struct AuthorsData
 {
 	int Sum = 0;
@@ -29,14 +30,12 @@ class Node : public std::enable_shared_from_this<Node>
 
 	std::string mName;
 	bool mActive;
+	static ActionPreferences mActionPreferences;
 
 	std::vector<std::weak_ptr<Node>> mNeighbors;
 	std::vector<NodePtr> mSubscribers;
 	std::vector<std::weak_ptr<Node>> mAuthors;
-
-	// Authors Data map will serve as additional data
 	std::unordered_map<std::string, AuthorsData> mAuthorsData;
-	static ActionPreferences mActionPreferences;
 
 	std::pair<std::shared_ptr<Node>, NodeActions> mUpdateBuffer;
 
@@ -64,7 +63,7 @@ public:
 	NodePtr SubscribeNeighbor(const NodePtr& Subscriber = nullptr);
 	void Subscribe(const NodePtr& Subscriber);
 
-	NodePtr UnsubscribeNeighbor(Node* Neighbor = nullptr) const;
+	NodePtr UnsubscribeNeighbor(Node* Author = nullptr) const;
 	void Unsubscribe(Node& Subscriber);
 
 
@@ -102,6 +101,8 @@ private:
 	auto FindNodeInContainer(const Node& NodeRef, C& Container) const -> decltype(std::begin(Container));
 	template<typename I, typename C>
 	void ResetAndEraseNode(const I& It, C& Container);
+	template<typename C>
+	NodePtr FindRandomNeighbor(const C& Array, int Deep) const;
 
 };
 

@@ -26,10 +26,18 @@ Node::Node(T&&Name, bool Active)
 template<typename ... Ts>
 Node::NodePtr Node::Factory::CreateNode(Ts... Args)
 {
-	// std::make_shared not working with private constructors
-	auto NewNode = NodePtr(new Node(std::forward<Ts>(Args)...));
-	NodeManager::AddNode(NewNode);
-	return NewNode;
+	// Exception handling in case if not enough free memory
+	try
+	{
+		// std::make_shared not working with private constructors
+		auto NewNode = NodePtr(new Node(std::forward<Ts>(Args)...));
+		NodeManager::AddNode(NewNode);
+		return NewNode;
+	}
+	catch (...)
+	{
+		return nullptr;
+	}
 }
 
 template<typename ... Ts>
@@ -49,7 +57,6 @@ void Node::Update(const bool Force, const NodeActions& Action)
 		{
 		case NodeActions::GenerateEvent:
 			GenerateEvent();
-			mUpdateBuffer = std::make_pair(nullptr, NodeActions::GenerateEvent);
 			break;
 		case NodeActions::SubscribeNeighbor:
 			mUpdateBuffer = std::make_pair(SubscribeNeighbor(), NodeActions::SubscribeNeighbor);
@@ -126,41 +133,22 @@ void Node::ReceiveEvent(const EventBase<T>& EventData, const Node& Other)
 
 Node::NodePtr Node::SubscribeNeighbor(const NodePtr& Subscriber)
 {
-	if (!mNeighbors.empty() && !Subscriber)
-	{
-		const auto NeighborIndex = RandomGenerator::GenerateNumber(0, static_cast<int>(mNeighbors.size()) - 1);
-		if (!mNeighbors[NeighborIndex].expired())
-		{
-			auto Neighbor = mNeighbors[NeighborIndex].lock();
-			if (!Neighbor->GetNeighbors().empty())
-			{
-				const auto NeighborsNeighborIndex = RandomGenerator::GenerateNumber(0, static_cast<int>(Neighbor->GetNeighbors().size()) - 1);
-				if (!Neighbor->GetNeighbors()[NeighborsNeighborIndex].expired())
-				{
-					auto NeighborsNeighbor = Neighbor->GetNeighbors()[NeighborsNeighborIndex].lock();
-					if (NeighborsNeighbor != shared_from_this())
-						return NeighborsNeighbor;
-				}
-			}
-			else
-				return Neighbor;
-		}
-	}
-	else if (Subscriber)
+	if (Subscriber && Subscriber != shared_from_this())
 		return Subscriber;
-	return nullptr;
+	return FindRandomNeighbor(mNeighbors, 1);
 }
 
-Node::NodePtr Node::UnsubscribeNeighbor(Node* Neighbor) const
+Node::NodePtr Node::UnsubscribeNeighbor(Node* Author) const
 {
-	if (!mAuthors.empty() && !Neighbor)
+	if (Author)
+		return NodePtr(Author);
+
+	if (!mAuthors.empty())
 	{
-		const auto Author = RandomGenerator::GenerateNumber(0, static_cast<int>(mAuthors.size()) - 1);
-		if (!mAuthors[Author].expired())
-			return mAuthors[Author].lock();
+		const auto AuthorIndex = RandomGenerator::GenerateNumber(0, static_cast<int>(mAuthors.size()) - 1);
+		if (!mAuthors[AuthorIndex].expired())
+			return mAuthors[AuthorIndex].lock();
 	}
-	else if (Neighbor)
-		return NodePtr(Neighbor);
 	return nullptr;
 }
 
@@ -227,6 +215,28 @@ void Node::SetEventHandler(const NodePtr& Author)
 		mAuthorsData[Author->GetName()].HandlerPtr = std::make_unique<SumHandler>();
 	else
 		mAuthorsData[Author->GetName()].HandlerPtr = std::make_unique<CountHandler>();
+}
+
+template<typename C>
+Node::NodePtr Node::FindRandomNeighbor(const C& Array, int Deep) const
+{
+	if (Array.empty() || Deep <= 0)
+		return nullptr;
+	{
+		const auto NeighborIndex = RandomGenerator::GenerateNumber(0, static_cast<int>(Array.size()) - 1);
+		const std::weak_ptr<Node> NeighborTemp = Array[NeighborIndex];
+		if (!NeighborTemp.expired())
+		{
+			auto Neighbor = NeighborTemp.lock();
+			auto NeighborsNeighbor = FindRandomNeighbor(Neighbor->GetNeighbors(), --Deep);
+			if (!NeighborsNeighbor) 
+				if (NeighborsNeighbor != shared_from_this())
+					return NeighborsNeighbor;
+			if (NeighborsNeighbor != shared_from_this())
+				return Neighbor;
+		}
+		return nullptr;
+	}
 }
 
 
