@@ -61,7 +61,7 @@ public:
 	void ReceiveEvent(const EventBase<T>&, const Node& Other);
 
 	NodePtr SubscribeNeighbor(const NodePtr& Subscriber = nullptr);
-	void Subscribe(const NodePtr& Subscriber);
+	void Subscribe(const NodePtr& Subscriber) noexcept;
 
 	NodePtr UnsubscribeNeighbor(Node* Author = nullptr) const;
 	void Unsubscribe(Node& Subscriber);
@@ -88,8 +88,8 @@ private:
 	Node(T&& Name, bool Active = true);
 
 
-	void AddAuthor(const NodePtr& Author);
-	void AddNeighbor(const NodePtr& Neighbor);
+	void AddAuthor(const NodePtr& Author) noexcept;
+	void AddNeighbor(const NodePtr& Neighbor) noexcept;
 
 	void RemoveAuthor(const Node& Author);
 	void RemoveNeighbor(const Node& Neighbor);
@@ -98,11 +98,11 @@ private:
 
 
 	template<typename C>
-	auto FindNodeInContainer(const Node& NodeRef, C& Container) const -> decltype(std::begin(Container));
+	auto FindNodeInContainer(const Node& NodeRef, C& Container) const noexcept -> decltype(std::begin(Container));
 	template<typename I, typename C>
-	void ResetAndEraseNode(const I& It, C& Container);
+	void ResetAndEraseNode(const I& It, C& Container) noexcept;
 	template<typename C>
-	NodePtr FindRandomNeighbor(const C& Array, int Deep) const;
+	NodePtr FindRandomNeighbor(const C& Array, int Deep) const noexcept;
 
 };
 

@@ -3,6 +3,7 @@
 
 std::list<std::shared_ptr<Node>> NodeManager::mNodes {};
 
+
 void NodeManager::AddNode(const NodePtr& NodePtr)
 {
 	if (NodePtr && std::find(mNodes.cbegin(),mNodes.cend(), NodePtr) == mNodes.cend())
@@ -31,8 +32,21 @@ void NodeManager::UpdateNodes()
 		else
 			It = mNodes.erase(It);
 	}
+	SubmitNodesUpdate();
+	DestroyLoneNodes();
+}
 
+void NodeManager::SubmitNodesUpdate()
+{
 	for (const auto& Item : mNodes)
 		if (Item)
 			Item->SubmitUpdate();
 }
+
+void NodeManager::DestroyLoneNodes()
+{
+	for (const auto& Item : mNodes)
+		if (Item)
+			Item->CheckAndDestroy();
+}
+

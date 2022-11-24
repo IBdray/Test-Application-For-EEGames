@@ -78,16 +78,6 @@ void Node::Update(const bool Force, const NodeActions& Action)
 	mActive = true;
 }
 
-bool Node::CheckAndDestroy()
-{
-	if (mNeighbors.empty())
-	{
-		NodeManager::RemoveNode(shared_from_this());
-		return true;
-	}
-	return false;
-}
-
 void Node::SubmitUpdate()
 {
 	if (mUpdateBuffer.first)
@@ -101,7 +91,7 @@ void Node::SubmitUpdate()
 			Subscribe(mUpdateBuffer.first);
 			break;
 		case NodeActions::UnsubscribeNeighbor:
-			Unsubscribe(*mUpdateBuffer.first);
+			mUpdateBuffer.first->Unsubscribe(*this);
 			break;
 		case NodeActions::GenerateEvent:
 		case NodeActions::Sleep:
@@ -112,9 +102,17 @@ void Node::SubmitUpdate()
 		mUpdateBuffer.first.reset();
 		mUpdateBuffer = {};
 	}
-	CheckAndDestroy();
 }
 
+bool Node::CheckAndDestroy()
+{
+	if (mNeighbors.empty())
+	{
+		NodeManager::RemoveNode(shared_from_this());
+		return true;
+	}
+	return false;
+}
 
 void Node::GenerateEvent() const
 {
@@ -138,6 +136,28 @@ Node::NodePtr Node::SubscribeNeighbor(const NodePtr& Subscriber)
 	return FindRandomNeighbor(mNeighbors, 1);
 }
 
+template<typename C>
+Node::NodePtr Node::FindRandomNeighbor(const C& Array, int Deep) const noexcept
+{
+	if (Array.empty() || Deep <= 0)
+		return nullptr;
+	{
+		const auto NeighborIndex = RandomGenerator::GenerateNumber(0, static_cast<int>(Array.size()) - 1);
+		const std::weak_ptr<Node> NeighborTemp = Array[NeighborIndex];
+		if (!NeighborTemp.expired())
+		{
+			auto Neighbor = NeighborTemp.lock();
+			auto NeighborsNeighbor = FindRandomNeighbor(Neighbor->GetNeighbors(), --Deep);
+			if (!NeighborsNeighbor) 
+				if (NeighborsNeighbor != shared_from_this())
+					return NeighborsNeighbor;
+			if (NeighborsNeighbor != shared_from_this())
+				return Neighbor;
+		}
+		return nullptr;
+	}
+}
+
 Node::NodePtr Node::UnsubscribeNeighbor(Node* Author) const
 {
 	if (Author)
@@ -153,7 +173,7 @@ Node::NodePtr Node::UnsubscribeNeighbor(Node* Author) const
 }
 
 
-void Node::Subscribe(const NodePtr& Subscriber)
+void Node::Subscribe(const NodePtr& Subscriber) noexcept
 {
 	if (Subscriber && Subscriber != shared_from_this() && !IsSubscriber(*Subscriber))
 	{
@@ -163,7 +183,7 @@ void Node::Subscribe(const NodePtr& Subscriber)
 	}
 }
 
-void Node::AddAuthor(const NodePtr& Author)
+void Node::AddAuthor(const NodePtr& Author) noexcept
 {
 	if (Author && Author != shared_from_this() && !IsAuthor(*Author))
 	{
@@ -174,7 +194,7 @@ void Node::AddAuthor(const NodePtr& Author)
 	}
 }
 
-void Node::AddNeighbor(const NodePtr& Neighbor)
+void Node::AddNeighbor(const NodePtr& Neighbor) noexcept
 {
 	if (Neighbor && Neighbor != shared_from_this() && !IsNeighbors(*Neighbor))
 		mNeighbors.emplace_back(Neighbor);
@@ -217,28 +237,6 @@ void Node::SetEventHandler(const NodePtr& Author)
 		mAuthorsData[Author->GetName()].HandlerPtr = std::make_unique<CountHandler>();
 }
 
-template<typename C>
-Node::NodePtr Node::FindRandomNeighbor(const C& Array, int Deep) const
-{
-	if (Array.empty() || Deep <= 0)
-		return nullptr;
-	{
-		const auto NeighborIndex = RandomGenerator::GenerateNumber(0, static_cast<int>(Array.size()) - 1);
-		const std::weak_ptr<Node> NeighborTemp = Array[NeighborIndex];
-		if (!NeighborTemp.expired())
-		{
-			auto Neighbor = NeighborTemp.lock();
-			auto NeighborsNeighbor = FindRandomNeighbor(Neighbor->GetNeighbors(), --Deep);
-			if (!NeighborsNeighbor) 
-				if (NeighborsNeighbor != shared_from_this())
-					return NeighborsNeighbor;
-			if (NeighborsNeighbor != shared_from_this())
-				return Neighbor;
-		}
-		return nullptr;
-	}
-}
-
 
 bool Node::IsNeighbors(const Node& Neighbor) const
 {
@@ -259,7 +257,7 @@ bool Node::IsBufferEmpty() const
 }
 
 template<typename T>
-auto Node::FindNodeInContainer(const Node& NodeRef, T& Container) const -> decltype(std::begin(Container))
+auto Node::FindNodeInContainer(const Node& NodeRef, T& Container) const noexcept -> decltype(std::begin(Container))
 {
 	return std::find_if(std::begin(Container),std::end(Container), 
 		[&NodeRef](const std::weak_ptr<Node>& ContainerNode) 
@@ -271,7 +269,7 @@ auto Node::FindNodeInContainer(const Node& NodeRef, T& Container) const -> declt
 }
 
 template<typename I, typename C>
-void Node::ResetAndEraseNode(const I& It, C& Container)
+void Node::ResetAndEraseNode(const I& It, C& Container) noexcept
 {
 	auto& TempNode = *It;
 	TempNode.reset();

@@ -16,8 +16,8 @@ int ActionPreferences::GetPreference(const NodeActions& Action) const
 
 NodeActions ActionPreferences::GetRandomAction() const
 {
-	const int RandomNumber = RandomGenerator::GenerateNumber(0, mChancesSum);
-	int Min = 0;
+	const int RandomNumber = RandomGenerator::GenerateNumber(1, mChancesSum);
+	int Min = 1;
 	for (auto& Action : mActionsMap)
 	{
 		if (RandomNumber >= Min && RandomNumber <= Action.second + Min)

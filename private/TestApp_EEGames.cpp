@@ -44,7 +44,7 @@ void Cycle()
 {
 	int CycleCounter = 0;
 
-	while (!GetAsyncKeyState(VK_ESCAPE))
+	while (!GetAsyncKeyState(VK_ESCAPE) && !NodeManager::GetNodes().empty())
 	{
 		NodeManager::UpdateNodes();
 
